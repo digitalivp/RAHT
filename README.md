@@ -7,6 +7,6 @@ This code implements an improved version of the RAHT-rlgr coder and decoder as d
 <a href="http://divp.org">Digital Image and Video Processing Group</a><br>
 <a href="http://unb.br">University of Brasília</a><br>
 <a href="http://cic.unb.br">Department of Computer Science</a><br>
-<a href="http://ene.unb.br">Department of Electrical Engineering</a><br>
+<a href="http://www.ene.unb.br/">Department of Electrical Engineering</a><br>
 
 
