@@ -2,20 +2,20 @@
 
 struct mem
 {
-    uint64 val;
-    uint64 ord;
+	uint64_t val;
+	uint64_t ord;
 };
 
 bool compari(mem &A, mem &B) {return A.val < B.val;}
 
-void copyAsort(double *VX, double *CX, uint64 N, vali *C, uint64 *W, uint64 *val, uint64 *ord)
+void copyAsort(double *VX, double *CX, size_t N, vali *C, uint64_t *W, uint64_t *val, uint64_t *ord)
 {
-	mem		*MEM = (mem *) malloc( N*sizeof(mem) );
-	double	*VY = VX+N, *VZ = VY+N;
-	double	*CY = CX+N, *CZ = CY+N;
-	uint64	vx, vy, vz;
+	mem			*MEM = (mem *) malloc( N*sizeof(mem) );
+	double		*VY = VX+N, *VZ = VY+N;
+	double		*CY = CX+N, *CZ = CY+N;
+	uint64_t	vx, vy, vz;
 
-	for(uint64 i=0; i<N; i++)
+	for(size_t i=0; i<N; i++)
 	{
 		vx = VZ[i];
 		vy = VY[i];
@@ -56,7 +56,7 @@ void copyAsort(double *VX, double *CX, uint64 N, vali *C, uint64 *W, uint64 *val
 
 	std::sort(MEM, MEM+N, compari);
 
-	for(uint64 i=0; i<N; i++)
+	for(size_t i=0; i<N; i++)
 	{
 		val[i] = MEM[i].val;
 		ord[i] = MEM[i].ord;
@@ -87,7 +87,7 @@ void itransform(double a0, double a1, vali *C0, vali *C1, vali *CT0, vali *CT1)
 	C1->cz = a0*CT1->cz + a1*CT0->cz;
 }
 
-void copyFromMEM(uint64 *IN_VAL, uint64 *IN_W, uint64 *OUT_VAL, uint64 *OUT_W, uint64 M)
+void copyFromMEM(uint64_t *IN_VAL, uint64_t *IN_W, uint64_t *OUT_VAL, uint64_t *OUT_W, uint64_t M)
 {
 	while(M)
 	{
@@ -104,21 +104,21 @@ void copyFromMEM(uint64 *IN_VAL, uint64 *IN_W, uint64 *OUT_VAL, uint64 *OUT_W, u
  * plhs[0] = mxCreateDoubleMatrix(NN, 3, mxREAL);
  * double	*outCT = mxGetPr(plhs[0])
  */
-void haar3D(double *inV, double *inC, uint64 N, uint64 depth, double *outCT, double *outW)
+void haar3D(double *inV, double *inC, size_t N, size_t depth, double *outCT, double *outW)
 {
-	uint64	NN=N;
-	uint64	M=N, S, d, i, j;
+	size_t	NN=N;
+	size_t	M=N, S, d, i, j;
 	double	a;
 	depth *= 3;
 
-	vali	*C	  = (vali    *) malloc( N*sizeof(vali) );
-	vali	*CT   = (vali    *) malloc( N*sizeof(vali) );
-	uint64	*w	  = (uint64  *) malloc( N*sizeof(uint64) );
-	uint64	*wT   = (uint64  *) malloc( N*sizeof(uint64) );
-	uint64	*val  = (uint64  *) malloc( N*sizeof(uint64) );
-	uint64	*valT = (uint64  *) malloc( N*sizeof(uint64) );
-	uint64	*TMP  = (uint64  *) malloc( N*sizeof(uint64) );
-	vali    *TPV;
+	vali		*C	  = (vali      *) malloc( N*sizeof(vali) );
+	vali		*CT   = (vali      *) malloc( N*sizeof(vali) );
+	uint64_t	*w	  = (uint64_t  *) malloc( N*sizeof(uint64_t) );
+	uint64_t	*wT   = (uint64_t  *) malloc( N*sizeof(uint64_t) );
+	uint64_t	*val  = (uint64_t  *) malloc( N*sizeof(uint64_t) );
+	uint64_t	*valT = (uint64_t  *) malloc( N*sizeof(uint64_t) );
+	uint64_t	*TMP  = (uint64_t  *) malloc( N*sizeof(uint64_t) );
+	vali		*TPV;
 
 	copyAsort(inV, inC, N, CT, w, val, TMP);
 	for(i=0; i<N; i++)
@@ -224,26 +224,26 @@ void haar3D(double *inV, double *inC, uint64 N, uint64 depth, double *outCT, dou
  * plhs[0] = mxCreateDoubleMatrix(NN, 3, mxREAL);
  * double	*outC = mxGetPr(plhs[0])
  */
-void inv_haar3D(double *inV, double *inCT, uint64 N, uint64 depth, double *outC)
+void inv_haar3D(double *inV, double *inCT, size_t N, size_t depth, double *outC)
 {
-	uint64	NN=N;
-	uint64	M=N, S, d, i, j;
+	size_t	NN=N;
+	size_t	M=N, S, d, i, j;
 	double	a;
 	depth *= 3;
 
-	vali	*C	  = (vali    *) malloc( N*sizeof(vali) );
-	vali	*CT   = (vali    *) malloc( N*sizeof(vali) );
-	uint64	*w	  = (uint64  *) malloc( N*sizeof(uint64) );
-	uint64	*wT   = (uint64  *) malloc( N*sizeof(uint64) );
-	uint64	*val  = (uint64  *) malloc( N*sizeof(uint64) );
-	uint64	*valT = (uint64  *) malloc( N*sizeof(uint64) );
-	uint64	*ord  = (uint64  *) malloc( N*sizeof(uint64) );
+	vali		*C	  = (vali      *) malloc( N*sizeof(vali) );
+	vali		*CT   = (vali      *) malloc( N*sizeof(vali) );
+	uint64_t	*w	  = (uint64_t  *) malloc( N*sizeof(uint64_t) );
+	uint64_t	*wT   = (uint64_t  *) malloc( N*sizeof(uint64_t) );
+	uint64_t	*val  = (uint64_t  *) malloc( N*sizeof(uint64_t) );
+	uint64_t	*valT = (uint64_t  *) malloc( N*sizeof(uint64_t) );
+	uint64_t	*ord  = (uint64_t  *) malloc( N*sizeof(uint64_t) );
 
-	uint64	**VAL = (uint64 **) malloc( depth*sizeof(uint64 *) );
-	uint64	**iW  = (uint64 **) malloc( depth*sizeof(uint64 *) );
-	uint64	*iM   = (uint64  *) malloc( depth*sizeof(uint64) );
+	uint64_t	**VAL = (uint64_t **) malloc( depth*sizeof(uint64_t *) );
+	uint64_t	**iW  = (uint64_t **) malloc( depth*sizeof(uint64_t *) );
+	size_t		*iM   = (size_t    *) malloc( depth*sizeof(size_t) );
 
-	uint64  *TMP;
+	uint64_t  *TMP;
 
 	copyAsort(inV, inCT, N, CT, w, val, ord);
 	for(i=0; i<N; i++)
@@ -255,8 +255,8 @@ void inv_haar3D(double *inV, double *inCT, uint64 N, uint64 depth, double *outC)
 	// executar os passos em ordem inversa na transformada inversa
 	for(d=0; d<depth; d++)
 	{
-		VAL[d] = (uint64 *) malloc( M*sizeof(uint64) );
-		iW[d]  = (uint64 *) malloc( M*sizeof(uint64) );
+		VAL[d] = (uint64_t *) malloc( M*sizeof(uint64_t) );
+		iW[d]  = (uint64_t *) malloc( M*sizeof(uint64_t) );
 
 		copyFromMEM(VAL[d], iW[d], val, w, M);
 		iM[d] = M;

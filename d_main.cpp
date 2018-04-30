@@ -1,5 +1,5 @@
 #include "mex.h"
-#include "inteiros.h"
+#include <stdint.h>
 #include "haar3D.h"
 #include <algorithm>
 #include <math.h>
@@ -56,7 +56,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
 		mexErrMsgTxt("First and second (aka V and C) input should have the same size");
     if( mxGetNumberOfDimensions(prhs[0])!=2 || mxGetNumberOfDimensions(prhs[1])!=2 )
 		mexErrMsgTxt("First two inputs (aka V and C) should be bidimensional");
-    if( ((int64) *mxGetPr(prhs[2]))<=0 )
+	if( ((int64_t) *mxGetPr(prhs[2]))<=0 )
 		mexErrMsgTxt("Third input (aka depth) should be greater than 0");
 
 	// Haar3d transform
@@ -94,11 +94,11 @@ void mexFunction(int nlhs, mxArray *plhs[],
             mexErrMsgTxt("Unable to open file");
         }
 
-		uint64		N = mxGetM(prhs[0])*3;
+		size_t		N = mxGetM(prhs[0])*3;
 		intmax_t	*data = (intmax_t *) malloc( N*sizeof(intmax_t) );
 		double		*CT = mxGetPr(plhs[0]);
 
-		uint64		depth = *mxGetPr(prhs[2]);
+		size_t		depth = *mxGetPr(prhs[2]);
 
 		// write header
         fid->grWrite(mxGetM(prhs[0]), 20);

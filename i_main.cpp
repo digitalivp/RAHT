@@ -1,5 +1,5 @@
 #include "mex.h"
-#include "inteiros.h"
+#include <stdint.h>
 #include "haar3D.h"
 #include <algorithm>
 #include <math.h>
@@ -12,7 +12,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
                  int nrhs, const mxArray *prhs[])
 {
 	double	*CT;
-	uint64	depth;
+	size_t	depth;
 
 	// Test inputs
 	if( !nrhs && !nlhs )
@@ -75,7 +75,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
 			mexErrMsgTxt("Unable to open file");
 		}
 
-		uint64	N = fid->grRead(20);
+		size_t	N = fid->grRead(20);
         depth = fid->grRead(4)+1;
 		fid->read(&Qstep, sizeof(double), 1);
 
