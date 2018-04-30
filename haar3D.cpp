@@ -136,7 +136,7 @@ void haar3D(double *inV, double *inC, uint64 N, uint64 depth, double *outCT, dou
 			j = i+1;
 			valT[M] = val[i] >> 1;
 
-			if( j<S && ((val[i]&MASK)==(val[j]&MASK)) )
+			if( j<S && ((val[i]&0xFFFFFFFFFFFFFFFE)==(val[j]&0xFFFFFFFFFFFFFFFE)) )
 			{
 				N--;
 
@@ -270,7 +270,7 @@ void inv_haar3D(double *inV, double *inCT, uint64 N, uint64 depth, double *outC)
 			valT[M] = val[i] >> 1;
 			j = i+1;
 
-			if( j<S && ((val[i]&MASK)==(val[j]&MASK)) )
+			if( j<S && ((val[i]&0xFFFFFFFFFFFFFFFE)==(val[j]&0xFFFFFFFFFFFFFFFE)) )
 			{
 				wT[M] = w[i]+w[j];
 				i += 2;
@@ -314,7 +314,7 @@ void inv_haar3D(double *inV, double *inCT, uint64 N, uint64 depth, double *outC)
 		{
 			j = i+1;
 
-			if( j<S && ((val[i]&MASK)==(val[j]&MASK)) )
+			if( j<S && ((val[i]&0xFFFFFFFFFFFFFFFE)==(val[j]&0xFFFFFFFFFFFFFFFE)) )
 			{
 				a  = sqrt(w[i]+w[j]);
 

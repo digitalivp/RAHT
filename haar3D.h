@@ -6,8 +6,6 @@
 #include <algorithm>
 #include <math.h>
 
-#define MASK 0xFFFFFFFFFFFFFFFE
-
 struct vali
 {
     double	cx;

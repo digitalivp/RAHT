@@ -85,20 +85,20 @@ void mexFunction(int nlhs, mxArray *plhs[],
 			mexErrMsgTxt("Fifth input (aka Qstep) shoud be greater than 0");
 
         char    *filename = mxArrayToString(prhs[3]);
-        file    *fid = new file(filename, WRITE_MODE);
+		file    *fid = new file(filename, 1);
         mxFree(filename);
 
-        if( fid->error )
+		if( fid->openError() )
         {
             delete fid;
             mexErrMsgTxt("Unable to open file");
         }
 
-        uint64  N = mxGetM(prhs[0])*3;
-        int64   *data = (int64 *) malloc( N*sizeof(int64) );
-        double  *CT = mxGetPr(plhs[0]);
+		uint64		N = mxGetM(prhs[0])*3;
+		intmax_t	*data = (intmax_t *) malloc( N*sizeof(intmax_t) );
+		double		*CT = mxGetPr(plhs[0]);
 
-        uint64  depth = *mxGetPr(prhs[2]);
+		uint64		depth = *mxGetPr(prhs[2]);
 
 		// write header
         fid->grWrite(mxGetM(prhs[0]), 20);
@@ -108,22 +108,9 @@ void mexFunction(int nlhs, mxArray *plhs[],
         while( N-- )
             data[N] = round(CT[N]/Qstep);
 
-        fid->rlgrStart();
         fid->rlgrWrite(data, mxGetM(prhs[0])*3);
-        fid->rlgrStop();
-
         free(data);
 
-		uint8	error = fid->error;
 		delete fid;
-		switch (error)
-		{
-		case 0:
-			break;
-		case 4:
-			mexErrMsgTxt("Overflow: tried to write more than 64 bits at once");
-		default:
-			mexErrMsgIdAndTxt("RAHT::file", "Unexpected error. Error number %d", error);
-		}
     }
 }

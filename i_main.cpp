@@ -66,10 +66,10 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
 		double  Qstep;
 		char    *filename = mxArrayToString(prhs[1]);
-		file    *fid = new file(filename, READ_MODE);
+		file    *fid = new file(filename, 0);
 		mxFree(filename);
 
-		if( fid->error )
+		if( fid->openError() )
 		{
 			delete fid;
 			mexErrMsgTxt("Unable to open file");
@@ -79,41 +79,21 @@ void mexFunction(int nlhs, mxArray *plhs[],
         depth = fid->grRead(4)+1;
 		fid->read(&Qstep, sizeof(double), 1);
 
-		if( fid->error )
-		{
-			delete fid;
-			mexErrMsgTxt("Unable to read file");
-		}
-
 		if( mxGetM(prhs[0])!=N || depth<=0 )
 			mexErrMsgTxt("First input (aka V) and the given file seem to be incompatible");
 
 		N *= 3;
-		int64	*data = (int64 *) malloc( N*sizeof(int64) );
+		intmax_t	*data = (intmax_t *) malloc( N*sizeof(intmax_t) );
 		CT = (double *) malloc( N*sizeof(double) );
 
-		fid->rlgrStart();
 		fid->rlgrRead(data, N);
-		fid->rlgrStop();
 
 		while( N-- )
 			CT[N] = Qstep*data[N];
 
 		free(data);
 
-		uint8	error = fid->error;
 		delete fid;
-		switch (error)
-		{
-		case 0:
-			break;
-		case 3:
-			mexErrMsgTxt("Reached end of file before reading all necessary bits");
-		case 4:
-			mexErrMsgTxt("Overflow: tried to read more than 64 bits at once");
-		default:
-			mexErrMsgIdAndTxt("RAHT::file", "Unexpected error. Error number %d", error);
-		}
 	}
 	else
 		mexErrMsgTxt("Expected 3 inputs");
