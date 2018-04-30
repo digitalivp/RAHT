@@ -84,18 +84,18 @@ void mexFunction(int nlhs, mxArray *plhs[],
 		CT = (double *) malloc( N*sizeof(double) );
 
 		fid->rlgrRead(data, N);
+		if( !fid->eof() )
+			mexWarnMsgTxt("The given file seens to be incompatible with the given geometry");
+		delete fid;
 
 		while( N-- )
 			CT[N] = Qstep*data[N];
-
 		free(data);
-
-		delete fid;
 	}
 	else
 		mexErrMsgTxt("Expected 3 inputs");
 
-    //
+	// Inverse transform
 	plhs[0] = mxCreateDoubleMatrix(mxGetM(prhs[0]), 3, mxREAL);
 	inv_haar3D(mxGetPr(prhs[0]), CT, mxGetM(prhs[0]), depth, mxGetPr(plhs[0]));
 

@@ -106,8 +106,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
             data[N] = round(CT[N]/Qstep);
 
         fid->rlgrWrite(data, mxGetM(prhs[0])*3);
-        free(data);
-
 		delete fid;
+        free(data);
     }
 }
