@@ -5,9 +5,6 @@
 #include <math.h>
 #include "file.h"
 
-/* C = inv_haar3D_c(V,CT,depth)
- * C = inv_haar3D_c(V,filename)
- */
 void mexFunction(int nlhs, mxArray *plhs[],
                  int nrhs, const mxArray *prhs[])
 {

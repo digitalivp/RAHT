@@ -7,9 +7,6 @@
 
 #define	debug	0
 
-/* [CT, W] = haar3D_c(V,C,depth)
- * [CT, W] = haar3D_c(V,C,depth,filename,Qstep)
- */
 void mexFunction(int nlhs, mxArray *plhs[],
                  int nrhs, const mxArray *prhs[])
 {
