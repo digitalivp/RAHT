@@ -111,44 +111,38 @@ uintmax_t file::read(uint_least8_t bits)
 
 void file::read(void *ptr, size_t size, size_t count)
 {
-	/*
-	uint8_t	*tmp = (uint8_t *) ptr;
+	if( size==8 )
+	{
+		while( count-- )
+		{
+			*((uint64_t *) ptr) = this->read( 64 );
+			ptr = ((uint64_t *) ptr) + 1;
+		}
+		return;
+	}
+	if( size==4 )
+	{
+		while( count-- )
+		{
+			*((uint32_t *) ptr) = this->read( 32 );
+			ptr = ((uint32_t *) ptr) + 1;
+		}
+		return;
+	}
+	if( size==2 )
+	{
+		while( count-- )
+		{
+			*((uint16_t *) ptr) = this->read( 16 );
+			ptr = ((uint16_t *) ptr) + 1;
+		}
+		return;
+	}
 	count *= size;
-
-	while( count-- )
-		*(tmp++) = this->read(8);
-	*/
-
 	while( count-- )
 	{
-		switch (size)
-		{
-		#ifdef UINT8_MAX
-		case 1:
-			*((uint8_t *) ptr) = this->read( 8 );
-			break;
-		#endif
-		#ifdef UINT16_MAX
-		case 2:
-			*((uint16_t *) ptr) = this->read( 16 );
-			break;
-		#endif
-		#ifdef UINT32_MAX
-		case 4:
-			*((uint32_t *) ptr) = this->read( 32 );
-			break;
-		#endif
-		#ifdef UINT64_MAX
-		case 8:
-			*((uint64_t *) ptr) = this->read( 64 );
-			break;
-		#endif
-		default:
-			*((uintmax_t *) ptr) = this->read( UINTMAX_BITS );
-			break;
-		}
-
-		ptr = (char *) ptr + size/sizeof(char);
+		*((uint8_t *) ptr) = this->read( 8 );
+		ptr = ((uint8_t *) ptr) + 1;
 	}
 }
 
@@ -179,44 +173,38 @@ void file::write(uintmax_t data, uint_least8_t bits)
 
 void file::write(void *ptr, size_t size, size_t count)
 {
-	/*
-	uint8_t	*tmp = (uint8_t *) ptr;
+	if( size==8 )
+	{
+		while( count-- )
+		{
+			this->write( *((uint64_t *) ptr), 64 );
+			ptr = ((uint64_t *) ptr) + 1;
+		}
+		return;
+	}
+	if( size==4 )
+	{
+		while( count-- )
+		{
+			this->write( *((uint32_t *) ptr), 32 );
+			ptr = ((uint32_t *) ptr) + 1;
+		}
+		return;
+	}
+	if( size==2 )
+	{
+		while( count-- )
+		{
+			this->write( *((uint16_t *) ptr), 16 );
+			ptr = ((uint16_t *) ptr) + 1;
+		}
+		return;
+	}
 	count *= size;
-
-	while( count-- )
-		this->write(*(tmp++), 8);
-	*/
-
 	while( count-- )
 	{
-		switch (size)
-		{
-		#ifdef UINT8_MAX
-		case 1:
-			this->write( *((uint8_t *) ptr), 8 );
-			break;
-		#endif
-		#ifdef UINT16_MAX
-		case 2:
-			this->write( *((uint16_t *) ptr), 16 );
-			break;
-		#endif
-		#ifdef UINT32_MAX
-		case 4:
-			this->write( *((uint32_t *) ptr), 32 );
-			break;
-		#endif
-		#ifdef UINT64_MAX
-		case 8:
-			this->write( *((uint64_t *) ptr), 64 );
-			break;
-		#endif
-		default:
-			this->write( *((uintmax_t *) ptr), UINTMAX_BITS );
-			break;
-		}
-
-		ptr = (char *) ptr + size/sizeof(char);
+		this->write( *((uint8_t *) ptr), 8 );
+		ptr = ((uint8_t *) ptr) + 1;
 	}
 }
 

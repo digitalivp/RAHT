@@ -6,7 +6,7 @@
 
 #define	UINTMAX_BITS	(sizeof(uintmax_t)*8)
 #define LEAST8_BITS		(sizeof(uint_least8_t)*8)
-#define MASK(k)			((((uintmax_t) 0x1)<<k)-1)
+#define MASK(k)			((((uintmax_t) 0x1)<<(k))-1)
 
 #ifndef UINT_LEAST8_MAX
 # define UINT_LEAST8_MAX	MASK(LEAST8_BITS)
