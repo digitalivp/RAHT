@@ -109,7 +109,7 @@ C2 = RAHT_dec(V, 'test.raht');
 fprintf('RMSE: %g\n', sqrt(mean((C2(:)-C(:)).^2)))
 ```
 Expected result:
->> RMSE: 2.88745
+> RMSE: 2.88745
 
 ## Test 2: ONLY APPLY HAAR3D TRANSFORM
 This test will only compute the transformed coefficients and its inverse and display the resulting Root Mean Squared Error
@@ -121,4 +121,4 @@ C2 = RAHT_dec(V, CT, 9);
 fprintf('RMSE: %g\n', sqrt(mean((C2(:)-C(:)).^2)))
 ```
 Expected result:
->> RMSE: 7.09696e-14
+> RMSE: 7.09696e-14
