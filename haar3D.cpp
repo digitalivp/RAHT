@@ -6,7 +6,7 @@ struct mem
 	uint64_t ord;
 };
 
-bool compari(mem &A, mem &B) {return A.val < B.val;}
+bool compari(const mem &A, const mem &B) {return A.val < B.val;}
 
 void copyAsort(double *VX, double *CX, size_t N, vali *C, uint64_t *W, uint64_t *val, uint64_t *ord)
 {
