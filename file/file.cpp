@@ -213,7 +213,12 @@ uintmax_t file::grRead(uint_least8_t bits)
 	uintmax_t	p = 0;
 
 	while( this->read() )
+	{
 		p++;
+		if( p>=32 )
+			return this->read(32);
+	}
+	
 	return (p<<bits) + this->read(bits);
 }
 
@@ -221,14 +226,16 @@ void file::grWrite(uintmax_t data, uint_least8_t bits)
 {
 	uintmax_t	p = data>>bits;
 
-	// code p 1s, a zero, and residual
-	while( p>=UINTMAX_BITS )
+	if( p<32 )
 	{
-		this->write(UINTMAX_MAX, UINTMAX_BITS);
-		p -= UINTMAX_BITS;
+		this->write(MASK(p+1)-1, p+1);
+		this->write(data&MASK(bits), bits);
 	}
-	this->write(MASK(p+1)-1, p+1);
-	this->write(data&MASK(bits), bits);
+	else
+	{
+		this->write(MASK(32), 32);
+		this->write(data, 32);
+	}
 }
 
 void file::rlgrRead(intmax_t *seq, size_t N, uint_least8_t flagSigned)
@@ -364,7 +371,7 @@ void file::rlgrWrite(intmax_t *seq, size_t N, uint_least8_t flagSigned)
 				if( p )
 				{
 					k_RP += p-1;
-					if( k_RP>32*L )
+					if( k_RP>(32*L) )
 						k_RP = 32*L;
 				}
 				else

@@ -107,9 +107,12 @@ load test.mat
 RAHT_cod(V, C, 9, 'test.raht', 10);
 C2 = RAHT_dec(V, 'test.raht');
 fprintf('RMSE: %g\n', sqrt(mean((C2(:)-C(:)).^2)))
+s = dir('test.raht');
+fprintf('Bytes: %d\n', s.bytes);
 ```
 Expected result:
 > RMSE: 2.88745
+> Bytes: 987428
 
 ## Test 2: ONLY APPLY HAAR3D TRANSFORM
 This test will only compute the transformed coefficients and its inverse and display the resulting Root Mean Squared Error
