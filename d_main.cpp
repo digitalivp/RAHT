@@ -23,7 +23,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
         mexPrintf("INPUTS\n");
         mexPrintf("    V:          (Nx3 double matrix) vertices of each voxel in the order\n");
         mexPrintf("                (X, Y, Z). The values should be non negative integers\n\n");
-        mexPrintf("    C:          (Nx3 double matrix) colors associated to each voxel. This\n");
+		mexPrintf("    C:          (NxK double matrix) colors associated to each voxel. This\n");
         mexPrintf("                input is transparente to RGB, YUV, YCbCr or any other color\n");
         mexPrintf("                space to be used as long as it is a triplet. It is also\n");
         mexPrintf("                transparent to the color range: colors can be in the range\n");
@@ -34,7 +34,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
         mexPrintf("    Qstep:      (1x1 double value) quantization step. It is dependent of\n");
         mexPrintf("                the color range\n\n");
         mexPrintf("OUTPUTS\n");
-        mexPrintf("    CT:         (Nx3) transformed colors coefficients\n");
+		mexPrintf("    CT:         (NxK) transformed colors coefficients\n");
         return;
     }
     if( nrhs!=3 && nrhs!=5 )
@@ -45,26 +45,28 @@ void mexFunction(int nlhs, mxArray *plhs[],
             mxGetClassID(prhs[1])!=mxDOUBLE_CLASS ||
             mxGetClassID(prhs[2])!=mxDOUBLE_CLASS )
         mexErrMsgTxt("First three inputs should be DOUBLE");
-    if( mxGetN(prhs[0])!=3 || mxGetN(prhs[1])!=3 )
-		mexErrMsgTxt("First two inputs (aka V and C) should have 3 columns");
+	if( mxGetN(prhs[0])!=3 )
+		mexErrMsgTxt("First input (aka V) should have 3 columns");
+	if( !mxGetN(prhs[1]) )
+		mexErrMsgTxt("Second input (aka C) should have at least 1 column");
     if( mxGetNumberOfElements(prhs[2])!=1 )
 		mexErrMsgTxt("Third input (aka depth) shoud have 1 element");
     if( mxGetM(prhs[0])!=mxGetM(prhs[1]) )
-		mexErrMsgTxt("First and second (aka V and C) input should have the same size");
+		mexErrMsgTxt("First and second (aka V and C) input should have the same number of lines");
     if( mxGetNumberOfDimensions(prhs[0])!=2 || mxGetNumberOfDimensions(prhs[1])!=2 )
 		mexErrMsgTxt("First two inputs (aka V and C) should be bidimensional");
 	if( ((int64_t) *mxGetPr(prhs[2]))<=0 )
 		mexErrMsgTxt("Third input (aka depth) should be greater than 0");
 
 	// Haar3d transform
-    plhs[0] = mxCreateDoubleMatrix(mxGetM(prhs[0]), 3, mxREAL);
+	plhs[0] = mxCreateDoubleMatrix(mxGetM(prhs[0]), mxGetN(prhs[1]), mxREAL);
     if(nlhs==2)
     {
         plhs[1] = mxCreateDoubleMatrix(mxGetM(prhs[0]), 1, mxREAL);
-        haar3D(mxGetPr(prhs[0]), mxGetPr(prhs[1]), mxGetM(prhs[0]), *mxGetPr(prhs[2]), mxGetPr(plhs[0]), mxGetPr(plhs[1]));
+		haar3D(mxGetPr(prhs[0]), mxGetPr(prhs[1]), mxGetN(prhs[1]), mxGetM(prhs[1]), *mxGetPr(prhs[2]), mxGetPr(plhs[0]), mxGetPr(plhs[1]));
     }
     else
-        haar3D(mxGetPr(prhs[0]), mxGetPr(prhs[1]), mxGetM(prhs[0]), *mxGetPr(prhs[2]), mxGetPr(plhs[0]));
+		haar3D(mxGetPr(prhs[0]), mxGetPr(prhs[1]), mxGetN(prhs[1]), mxGetM(prhs[1]), *mxGetPr(prhs[2]), mxGetPr(plhs[0]));
 
 	// Encode file
     if( nrhs==5 )
@@ -91,21 +93,22 @@ void mexFunction(int nlhs, mxArray *plhs[],
             mexErrMsgTxt("Unable to open file");
         }
 
-		size_t		N = mxGetM(prhs[0])*3;
+		size_t		N = mxGetM(prhs[1])*mxGetN(prhs[1]);
 		intmax_t	*data = (intmax_t *) malloc( N*sizeof(intmax_t) );
 		double		*CT = mxGetPr(plhs[0]);
 
 		size_t		depth = *mxGetPr(prhs[2]);
 
 		// write header
-        fid->grWrite(mxGetM(prhs[0]), 20);
+		fid->grWrite(mxGetM(prhs[1]), 20);
+		fid->grWrite(mxGetN(prhs[1]), 3);
         fid->grWrite(depth-1, 4);
         fid->write(&Qstep, sizeof(double), 1);
 
         while( N-- )
             data[N] = round(CT[N]/Qstep);
 
-        fid->rlgrWrite(data, mxGetM(prhs[0])*3);
+		fid->rlgrWrite(data, mxGetM(prhs[1])*mxGetN(prhs[1]));
 		delete fid;
         free(data);
     }

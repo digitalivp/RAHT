@@ -10,6 +10,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
 {
 	double	*CT;
 	size_t	depth;
+	size_t	K;
 
 	// Test inputs
 	if( !nrhs && !nlhs )
@@ -21,12 +22,12 @@ void mexFunction(int nlhs, mxArray *plhs[],
         mexPrintf("INPUTS\n");
         mexPrintf("    V:          (Nx3 double matrix) vertices of each voxel in the order\n");
         mexPrintf("                (X, Y, Z). The values should be non negative integers\n\n");
-        mexPrintf("    CT:         (Nx3 double matrix) transformed coefficients coefficients\n\n");
+		mexPrintf("    CT:         (NxK double matrix) transformed coefficients coefficients\n\n");
         mexPrintf("    depth:      (1x1 double value) the depth of the octree to be used for\n");
         mexPrintf("                the transform. It needs to be an integer value grater than 0\n\n");
         mexPrintf("    filename:   (string of chars) file name\n\n");
         mexPrintf("OUTPUTS\n");
-        mexPrintf("    C:          (Nx3) colors associated to each voxel\n");
+		mexPrintf("    C:          (NxK) colors associated to each voxel\n");
         return;
 	}
 	if( nlhs>1 )
@@ -37,8 +38,11 @@ void mexFunction(int nlhs, mxArray *plhs[],
 	{
 		if( mxGetClassID(prhs[1])!=mxDOUBLE_CLASS || mxGetClassID(prhs[2])!=mxDOUBLE_CLASS)
 			mexErrMsgTxt("Inputs should be DOUBLE");
-		if( mxGetN(prhs[0])!=3 || mxGetN(prhs[1])!=3 )
-			mexErrMsgTxt("First two inputs (aka V and C) should have 3 columns");
+		if( mxGetN(prhs[0])!=3 )
+			mexErrMsgTxt("First input (aka V) should have 3 columns");
+		K = mxGetN(prhs[1]);
+		if( !K )
+			mexErrMsgTxt("Second input (aka CT) should have at least 1 column");
 		if( mxGetNumberOfElements(prhs[2])!=1 )
 			mexErrMsgTxt("Third input (aka depth) shoud have 1 element");
 		if( mxGetM(prhs[0])!=mxGetM(prhs[1]) )
@@ -73,13 +77,14 @@ void mexFunction(int nlhs, mxArray *plhs[],
 		}
 
 		size_t	N = fid->grRead(20);
+		K = fid->grRead(3);
         depth = fid->grRead(4)+1;
 		fid->read(&Qstep, sizeof(double), 1);
 
 		if( mxGetM(prhs[0])!=N || depth<=0 )
 			mexErrMsgTxt("First input (aka V) and the given file seem to be incompatible");
 
-		N *= 3;
+		N *= K;
 		intmax_t	*data = (intmax_t *) malloc( N*sizeof(intmax_t) );
 		CT = (double *) malloc( N*sizeof(double) );
 
@@ -96,8 +101,8 @@ void mexFunction(int nlhs, mxArray *plhs[],
 		mexErrMsgTxt("Expected 3 inputs");
 
 	// Inverse transform
-	plhs[0] = mxCreateDoubleMatrix(mxGetM(prhs[0]), 3, mxREAL);
-	inv_haar3D(mxGetPr(prhs[0]), CT, mxGetM(prhs[0]), depth, mxGetPr(plhs[0]));
+	plhs[0] = mxCreateDoubleMatrix(mxGetM(prhs[0]), K, mxREAL);
+	inv_haar3D(mxGetPr(prhs[0]), CT, K, mxGetM(prhs[0]), depth, mxGetPr(plhs[0]));
 
 	if( nrhs==2 )
 		free(CT);
