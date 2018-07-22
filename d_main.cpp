@@ -37,8 +37,8 @@ void mexFunction(int nlhs, mxArray *plhs[],
 		mexPrintf("    CT:         (NxK) transformed colors coefficients\n");
         return;
     }
-    if( nrhs!=3 && nrhs!=5 )
-        mexErrMsgTxt("Expected 3 or 5 inputs");
+    if( nrhs!=5 )
+        mexErrMsgTxt("Expected 5 inputs");
     if( nlhs>2 )
 		mexErrMsgTxt("Expected 1 or 2 outputs");
     if( mxGetClassID(prhs[0])!=mxDOUBLE_CLASS ||
@@ -57,59 +57,54 @@ void mexFunction(int nlhs, mxArray *plhs[],
 		mexErrMsgTxt("First two inputs (aka V and C) should be bidimensional");
 	if( ((int64_t) *mxGetPr(prhs[2]))<=0 )
 		mexErrMsgTxt("Third input (aka depth) should be greater than 0");
+    if( mxGetClassID(prhs[3])!=mxCHAR_CLASS )
+        mexErrMsgTxt("Fourth input (aka filename) should be a char string");
+    if( mxGetClassID(prhs[4])!=mxDOUBLE_CLASS )
+        mexErrMsgTxt("Fifth input (aka Qstep) should be DOUBLE");
+    if( mxGetNumberOfElements(prhs[4])!=1 )
+        mexErrMsgTxt("Fifth input (aka Qstep) shoud have 1 element");
+
+    double  Qstep = *mxGetPr(prhs[4]);
+
+    if( Qstep<=0 )
+        mexErrMsgTxt("Fifth input (aka Qstep) shoud be greater than 0");
 
 	// Haar3d transform
 	plhs[0] = mxCreateDoubleMatrix(mxGetM(prhs[0]), mxGetN(prhs[1]), mxREAL);
     if(nlhs==2)
     {
         plhs[1] = mxCreateDoubleMatrix(mxGetM(prhs[0]), 1, mxREAL);
-		haar3D(mxGetPr(prhs[0]), mxGetPr(prhs[1]), mxGetN(prhs[1]), mxGetM(prhs[1]), *mxGetPr(prhs[2]), mxGetPr(plhs[0]), mxGetPr(plhs[1]));
+        haar3D(Qstep, mxGetPr(prhs[0]), mxGetPr(prhs[1]), mxGetN(prhs[1]), mxGetM(prhs[1]), *mxGetPr(prhs[2]), mxGetPr(plhs[0]), mxGetPr(plhs[1]));
     }
     else
-		haar3D(mxGetPr(prhs[0]), mxGetPr(prhs[1]), mxGetN(prhs[1]), mxGetM(prhs[1]), *mxGetPr(prhs[2]), mxGetPr(plhs[0]));
+        haar3D(Qstep, mxGetPr(prhs[0]), mxGetPr(prhs[1]), mxGetN(prhs[1]), mxGetM(prhs[1]), *mxGetPr(prhs[2]), mxGetPr(plhs[0]));
 
 	// Encode file
-    if( nrhs==5 )
+    char    *filename = mxArrayToString(prhs[3]);
+    file    *fid = new file(filename, 1);
+    mxFree(filename);
+
+    if( fid->openError() )
     {
-        if( mxGetClassID(prhs[3])!=mxCHAR_CLASS )
-			mexErrMsgTxt("Fourth input (aka filename) should be a char string");
-        if( mxGetClassID(prhs[4])!=mxDOUBLE_CLASS )
-            mexErrMsgTxt("Fifth input (aka Qstep) should be DOUBLE");
-        if( mxGetNumberOfElements(prhs[4])!=1 )
-            mexErrMsgTxt("Fifth input (aka Qstep) shoud have 1 element");
-
-        double  Qstep = *mxGetPr(prhs[4]);
-
-		if( Qstep<=0 )
-			mexErrMsgTxt("Fifth input (aka Qstep) shoud be greater than 0");
-
-        char    *filename = mxArrayToString(prhs[3]);
-		file    *fid = new file(filename, 1);
-        mxFree(filename);
-
-		if( fid->openError() )
-        {
-            delete fid;
-            mexErrMsgTxt("Unable to open file");
-        }
-
-		size_t		N = mxGetM(prhs[1])*mxGetN(prhs[1]);
-		intmax_t	*data = (intmax_t *) malloc( N*sizeof(intmax_t) );
-		double		*CT = mxGetPr(plhs[0]);
-
-		size_t		depth = *mxGetPr(prhs[2]);
-
-		// write header
-		fid->grWrite(mxGetM(prhs[1]), 20);
-		fid->grWrite(mxGetN(prhs[1]), 3);
-        fid->grWrite(depth-1, 4);
-        fid->write(&Qstep, sizeof(double), 1);
-
-        while( N-- )
-            data[N] = round(CT[N]/Qstep);
-
-		fid->rlgrWrite(data, mxGetM(prhs[1])*mxGetN(prhs[1]));
-		delete fid;
-        free(data);
+        delete fid;
+        mexErrMsgTxt("Unable to open file");
     }
+
+    size_t      N = mxGetM(prhs[1])*mxGetN(prhs[1]);
+    intmax_t    *data = (intmax_t *) malloc( N*sizeof(intmax_t) );
+    double      *CT = mxGetPr(plhs[0]);
+    size_t      depth = *mxGetPr(prhs[2]);
+
+    // write header
+    fid->grWrite(mxGetM(prhs[1]), 20);
+    fid->grWrite(mxGetN(prhs[1]), 3);
+    fid->grWrite(depth-1, 4);
+    fid->write(&Qstep, sizeof(double), 1);
+
+    while( N-- )
+        data[N] = round(CT[N]);
+
+    fid->rlgrWrite(data, mxGetM(prhs[1])*mxGetN(prhs[1]));
+    delete fid;
+    free(data);
 }

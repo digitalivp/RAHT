@@ -63,14 +63,24 @@ void copyAsort(double *VX, double *CX, size_t K, size_t N, double *C, uint64_t *
     free(MEM);
 }
 
-void transform(uint64_t w0, uint64_t w1, double *C0, double *C1, double *CT0, double *CT1, size_t K)
+void reescaleQstep(double *Qstep, double sumW, double prodW)
+{
+    *Qstep *= sqrt(sumW/prodW);
+    if( (*Qstep)<1 )
+        *Qstep = 1;
+}
+
+void transform(double Qstep, uint64_t w0, uint64_t w1, double *C0, double *C1, double *CT0, double *CT1, size_t K)
 {
     double  b = (double) w1/(w0+w1);
+    reescaleQstep(&Qstep, w0+w1, w0*w1);
 
     while( K-- )
     {
-        *(CT1) = (*C1) - (*C0);
-        *(CT0) = (*C0) + round(b*(*CT1));
+        *CT1 = (*C1) - (*C0);
+        *CT0 = (*C0) + round(b*(*CT1));
+
+        *CT1 = round( (*CT1)/Qstep );
 
         C0++;
         C1++;
@@ -79,14 +89,15 @@ void transform(uint64_t w0, uint64_t w1, double *C0, double *C1, double *CT0, do
     }
 }
 
-void itransform(uint64_t w0, uint64_t w1, double *C0, double *C1, double *CT0, double *CT1, size_t K)
+void itransform(double Qstep, uint64_t w0, uint64_t w1, double *C0, double *C1, double *CT0, double *CT1, size_t K)
 {
     double  b = (double) w1/(w0+w1);
+    reescaleQstep(&Qstep, w0+w1, w0*w1);
 
     while( K-- )
     {
-        (*C0) = (*CT0) - round(b*(*CT1));
-        (*C1) = (*CT1) + (*C0);
+        *C0 = (*CT0) - round(b*(*CT1)*Qstep);
+        *C1 = (*CT1)*Qstep + (*C0);
 
         C0++;
         C1++;
@@ -112,7 +123,7 @@ void copyFromMEM(uint64_t *IN_VAL, uint64_t *IN_W, uint64_t *OUT_VAL, uint64_t *
  * plhs[0] = mxCreateDoubleMatrix(NN, 3, mxREAL);
  * double	*outCT = mxGetPr(plhs[0])
  */
-void haar3D(double *inV, double *inC, size_t K, size_t N, size_t depth, double *outCT, double *outW)
+void haar3D(double Qstep, double *inV, double *inC, size_t K, size_t N, size_t depth, double *outCT, double *outW)
 {
     size_t	NN=N;
     size_t	M=N, S, d, i, j;
@@ -151,7 +162,7 @@ void haar3D(double *inV, double *inC, size_t K, size_t N, size_t depth, double *
                 wT[M] = w[i]+w[j];
                 wT[N] = wT[M];
 
-                transform(w[i], w[j], C+i*K, C+j*K, CT+M*K, CT+N*K, K);
+                transform(Qstep, w[i], w[j], C+i*K, C+j*K, CT+M*K, CT+N*K, K);
 
                 i += 2;
             }
@@ -217,7 +228,7 @@ void haar3D(double *inV, double *inC, size_t K, size_t N, size_t depth, double *
  * plhs[0] = mxCreateDoubleMatrix(NN, 3, mxREAL);
  * double	*outC = mxGetPr(plhs[0])
  */
-void inv_haar3D(double *inV, double *inCT, size_t K, size_t N, size_t depth, double *outC)
+void inv_haar3D(double Qstep, double *inV, double *inCT, size_t K, size_t N, size_t depth, double *outC)
 {
     size_t	NN=N;
     size_t	M=N, S, d, i, j;
@@ -311,7 +322,7 @@ void inv_haar3D(double *inV, double *inCT, size_t K, size_t N, size_t depth, dou
             if( j<S && ((val[i]&0xFFFFFFFFFFFFFFFE)==(val[j]&0xFFFFFFFFFFFFFFFE)) )
             {
                 N--;
-                itransform(w[i], w[j], C+i*K, C+j*K, CT+M*K, CT+N*K, K);
+                itransform(Qstep, w[i], w[j], C+i*K, C+j*K, CT+M*K, CT+N*K, K);
                 i += 2;
             }
             else
