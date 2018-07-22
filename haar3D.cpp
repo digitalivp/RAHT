@@ -63,9 +63,9 @@ void copyAsort(double *VX, double *CX, size_t K, size_t N, double *C, uint64_t *
     free(MEM);
 }
 
-void transform(double a0, double a1, double *C0, double *C1, double *CT0, double *CT1, size_t K)
+void transform(uint64_t w0, uint64_t w1, double *C0, double *C1, double *CT0, double *CT1, size_t K)
 {
-    double  b = a1*a1;
+    double  b = (double) w1/(w0+w1);
 
     while( K-- )
     {
@@ -79,9 +79,9 @@ void transform(double a0, double a1, double *C0, double *C1, double *CT0, double
     }
 }
 
-void itransform(double a0, double a1, double *C0, double *C1, double *CT0, double *CT1, size_t K)
+void itransform(uint64_t w0, uint64_t w1, double *C0, double *C1, double *CT0, double *CT1, size_t K)
 {
-    double  b = a1*a1;
+    double  b = (double) w1/(w0+w1);
 
     while( K-- )
     {
@@ -116,7 +116,6 @@ void haar3D(double *inV, double *inC, size_t K, size_t N, size_t depth, double *
 {
     size_t	NN=N;
     size_t	M=N, S, d, i, j;
-    double	a;
     depth *= 3;
 
     double		*C	  = (double    *) malloc( N*K*sizeof(double) );
@@ -152,8 +151,7 @@ void haar3D(double *inV, double *inC, size_t K, size_t N, size_t depth, double *
                 wT[M] = w[i]+w[j];
                 wT[N] = wT[M];
 
-                a = sqrt(wT[M]);
-                transform(sqrt(w[i])/a, sqrt(w[j])/a, C+i*K, C+j*K, CT+M*K, CT+N*K, K);
+                transform(w[i], w[j], C+i*K, C+j*K, CT+M*K, CT+N*K, K);
 
                 i += 2;
             }
@@ -223,7 +221,6 @@ void inv_haar3D(double *inV, double *inCT, size_t K, size_t N, size_t depth, dou
 {
     size_t	NN=N;
     size_t	M=N, S, d, i, j;
-    double	a;
     depth *= 3;
 
     double		*C	  = (double    *) malloc( N*K*sizeof(double) );
@@ -313,10 +310,8 @@ void inv_haar3D(double *inV, double *inCT, size_t K, size_t N, size_t depth, dou
 
             if( j<S && ((val[i]&0xFFFFFFFFFFFFFFFE)==(val[j]&0xFFFFFFFFFFFFFFFE)) )
             {
-                a  = sqrt(w[i]+w[j]);
-
                 N--;
-                itransform(sqrt(w[i])/a, sqrt(w[j])/a, C+i*K, C+j*K, CT+M*K, CT+N*K, K);
+                itransform(w[i], w[j], C+i*K, C+j*K, CT+M*K, CT+N*K, K);
                 i += 2;
             }
             else
