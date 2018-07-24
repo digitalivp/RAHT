@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <math.h>
 
+#define INTEGER_TRANSFORM_PRECISION 128
+
 /*
 struct vali
 {

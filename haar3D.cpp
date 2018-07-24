@@ -66,8 +66,15 @@ void copyAsort(double *VX, double *CX, size_t K, size_t N, double *C, uint64_t *
 void reescaleQstep(double *Qstep, double sumW, double prodW)
 {
     *Qstep *= sqrt(sumW/prodW);
+    /*
     if( (*Qstep)<1 )
         *Qstep = 1;
+    */
+}
+
+double  roundP(double val)
+{
+    return round(val*INTEGER_TRANSFORM_PRECISION)/INTEGER_TRANSFORM_PRECISION;
 }
 
 void transform(double Qstep, uint64_t w0, uint64_t w1, double *C0, double *C1, double *CT0, double *CT1, size_t K)
@@ -78,7 +85,7 @@ void transform(double Qstep, uint64_t w0, uint64_t w1, double *C0, double *C1, d
     while( K-- )
     {
         *CT1 = (*C1) - (*C0);
-        *CT0 = (*C0) + round(b*(*CT1));
+        *CT0 = (*C0) + roundP(b*(*CT1));
 
         *CT1 = round( (*CT1)/Qstep );
 
@@ -96,7 +103,7 @@ void itransform(double Qstep, uint64_t w0, uint64_t w1, double *C0, double *C1, 
 
     while( K-- )
     {
-        *C0 = (*CT0) - round(b*(*CT1)*Qstep);
+        *C0 = (*CT0) - roundP(b*(*CT1)*Qstep);
         *C1 = (*CT1)*Qstep + (*C0);
 
         C0++;
@@ -200,6 +207,10 @@ void haar3D(double Qstep, double *inV, double *inC, size_t K, size_t N, size_t d
     free(val);
     free(valT);
 
+    // Quantization of DC coefficients
+    for(size_t k=0; k<K; k++)
+        C[k] = round(C[k]*sqrt(w[0])/Qstep);
+
     if( outW!=NULL )
     {
         for(i=0; i<NN; i++)
@@ -249,6 +260,11 @@ void inv_haar3D(double Qstep, double *inV, double *inCT, size_t K, size_t N, siz
     uint64_t  *TMP;
 
     copyAsort(inV, inCT, K, N, CT, w, val, ord);
+
+    // Dequantization of DC coefficients
+    for(size_t k=0; k<K; k++)
+        CT[k] = CT[k]*Qstep/sqrt(N);
+
     for(i=0; i<N; i++)
         for(size_t k=0; k<K; k++)
             C[i*K+k] = CT[i*K+k];
