@@ -66,6 +66,7 @@ void copyAsort(double *VX, double *CX, size_t K, size_t N, double *C, uint64_t *
 void reescaleQstep(double *Qstep, double sumW, double prodW)
 {
     *Qstep *= sqrt(sumW/prodW);
+    *Qstep = round((*Qstep)*INTEGER_STEPSIZE_PRECISION)/INTEGER_STEPSIZE_PRECISION;
     /*
     if( (*Qstep)<1 )
         *Qstep = 1;

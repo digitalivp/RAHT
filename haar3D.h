@@ -7,6 +7,7 @@
 #include <math.h>
 
 #define INTEGER_TRANSFORM_PRECISION 128
+#define INTEGER_STEPSIZE_PRECISION  16
 
 /*
 struct vali
