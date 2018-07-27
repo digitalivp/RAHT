@@ -63,16 +63,6 @@ void copyAsort(double *VX, double *CX, size_t K, size_t N, double *C, uint64_t *
     free(MEM);
 }
 
-void reescaleQstep(double *Qstep, double sumW, double prodW)
-{
-    *Qstep *= sqrt(sumW/prodW);
-    *Qstep = round((*Qstep)*INTEGER_STEPSIZE_PRECISION)/INTEGER_STEPSIZE_PRECISION;
-    /*
-    if( (*Qstep)<1 )
-        *Qstep = 1;
-    */
-}
-
 double  roundP(double val)
 {
     return round(val*INTEGER_TRANSFORM_PRECISION)/INTEGER_TRANSFORM_PRECISION;
@@ -81,7 +71,11 @@ double  roundP(double val)
 void transform(double Qstep, uint64_t w0, uint64_t w1, double *C0, double *C1, double *CT0, double *CT1, size_t K)
 {
     double  b = (double) w1/(w0+w1);
-    reescaleQstep(&Qstep, w0+w1, w0*w1);
+    Qstep = sqrtIF(Qstep*(0x1<<INTEGER_STEPSIZE_PRECISION), w0, w1);
+    Qstep /= 0x1<<INTEGER_STEPSIZE_PRECISION;
+#if INVERSE_SQUARE_ROOT
+    Qstep = 1.0/Qstep;
+#endif
 
     while( K-- )
     {
@@ -100,7 +94,11 @@ void transform(double Qstep, uint64_t w0, uint64_t w1, double *C0, double *C1, d
 void itransform(double Qstep, uint64_t w0, uint64_t w1, double *C0, double *C1, double *CT0, double *CT1, size_t K)
 {
     double  b = (double) w1/(w0+w1);
-    reescaleQstep(&Qstep, w0+w1, w0*w1);
+    Qstep = sqrtIF(Qstep*(0x1<<INTEGER_STEPSIZE_PRECISION), w0, w1);
+    Qstep /= 0x1<<INTEGER_STEPSIZE_PRECISION;
+#if INVERSE_SQUARE_ROOT
+    Qstep = 1.0/Qstep;
+#endif
 
     while( K-- )
     {

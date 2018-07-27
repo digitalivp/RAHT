@@ -6,17 +6,13 @@
 #include <algorithm>
 #include <math.h>
 
-#define INTEGER_TRANSFORM_PRECISION 128
-#define INTEGER_STEPSIZE_PRECISION  16
+#define INTEGER_TRANSFORM_PRECISION 10
+#define INTEGER_STEPSIZE_PRECISION  10
+#define INVERSE_SQUARE_ROOT         0
+#define EMPLOY_STEP_CLEANING        0
 
-/*
-struct vali
-{
-    double	cx;
-    double  cy;
-    double  cz;
-};
-*/
+int64_t sqrtIF(int64_t A, int64_t W0, int64_t W1);
+int64_t sqrtIF(int64_t A, int64_t W);
 
 void copyAsort(double *VX, double *CX, size_t N, double *C, uint64_t *W, uint64_t *val, uint64_t *ord);
 void haar3D(double Qstep, double *inV, double *inC, size_t K, size_t N, size_t depth, double *outCT, double *outW=NULL);
