@@ -68,21 +68,49 @@ double  roundP(double val)
     return round(val*INTEGER_TRANSFORM_PRECISION)/INTEGER_TRANSFORM_PRECISION;
 }
 
-void transform(double Qstep, uint64_t w0, uint64_t w1, double *C0, double *C1, double *CT0, double *CT1, size_t K)
+int64_t roundIF(int64_t X)
 {
-    double  b = (double) w1/(w0+w1);
-    Qstep = sqrtIF(Qstep*(0x1<<INTEGER_STEPSIZE_PRECISION), w0, w1);
-    Qstep /= 0x1<<INTEGER_STEPSIZE_PRECISION;
-#if INVERSE_SQUARE_ROOT
-    Qstep = 1.0/Qstep;
-#endif
+    if( X>=0 )
+    {
+        X >>= INTEGER_TRANSFORM_PRECISION-1;
+        if( X&0x1 )
+            return (X>>1)+1;
+        return X>>1;
+    }
+    else
+    {
+        X = (-X)>>(INTEGER_TRANSFORM_PRECISION-1);
+        if( X&0x1 )
+            return -(X>>1)-1;
+        return -(X>>1);
+    }
+}
+
+void transform(int64_t Qstep, uint64_t w0, uint64_t w1, double *C0, double *C1, double *CT0, double *CT1, size_t K)
+{
+    int64_t  b = (w1<<INTEGER_TRANSFORM_PRECISION)/(w0+w1);
+    Qstep = sqrtIF(Qstep<<INTEGER_STEPSIZE_PRECISION, w0, w1);
+
+    int64_t I0, I1, IT0, IT1;
 
     while( K-- )
     {
-        *CT1 = (*C1) - (*C0);
-        *CT0 = (*C0) + roundP(b*(*CT1));
+        I0 = (*C0)*(0x1<<INTEGER_TRANSFORM_PRECISION);
+        I1 = (*C1)*(0x1<<INTEGER_TRANSFORM_PRECISION);
 
-        *CT1 = round( (*CT1)/Qstep );
+        IT1 = I1 - I0;
+        IT0 = I0 + (b*IT1)/(0x1<<INTEGER_TRANSFORM_PRECISION);
+
+#if INVERSE_SQUARE_ROOT
+        IT1 = IT1*Qstep/(0x1<<INTEGER_STEPSIZE_PRECISION);
+#else
+        IT1 = (IT1*(0x1<<INTEGER_STEPSIZE_PRECISION))/Qstep;
+#endif
+        IT1 = roundIF(IT1);
+
+        *CT0 = IT0;
+        *CT1 = IT1;
+        *CT0 /= 0x1<<INTEGER_TRANSFORM_PRECISION;
 
         C0++;
         C1++;
@@ -96,14 +124,16 @@ void itransform(double Qstep, uint64_t w0, uint64_t w1, double *C0, double *C1, 
     double  b = (double) w1/(w0+w1);
     Qstep = sqrtIF(Qstep*(0x1<<INTEGER_STEPSIZE_PRECISION), w0, w1);
     Qstep /= 0x1<<INTEGER_STEPSIZE_PRECISION;
-#if INVERSE_SQUARE_ROOT
-    Qstep = 1.0/Qstep;
-#endif
 
     while( K-- )
     {
+#if INVERSE_SQUARE_ROOT
+        *C0 = (*CT0) - roundP((b*(*CT1))/Qstep);
+        *C1 = (*CT1)/Qstep + (*C0);
+#else
         *C0 = (*CT0) - roundP(b*(*CT1)*Qstep);
         *C1 = (*CT1)*Qstep + (*C0);
+#endif
 
         C0++;
         C1++;
