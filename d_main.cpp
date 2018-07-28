@@ -68,6 +68,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
     if( Qstep<=0 )
         mexErrMsgTxt("Fifth input (aka Qstep) shoud be greater than 0");
+    Qstep *= 0x1<<INTEGER_STEPSIZE_PRECISION;
 
 	// Haar3d transform
 	plhs[0] = mxCreateDoubleMatrix(mxGetM(prhs[0]), mxGetN(prhs[1]), mxREAL);
@@ -99,7 +100,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
     fid->grWrite(mxGetM(prhs[1]), 20);
     fid->grWrite(mxGetN(prhs[1]), 3);
     fid->grWrite(depth-1, 4);
-    fid->write(&Qstep, sizeof(double), 1);
+    fid->write(Qstep, 64);
 
     while( N-- )
         data[N] = round(CT[N]);
