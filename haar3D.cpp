@@ -119,21 +119,29 @@ void transform(int64_t Qstep, uint64_t w0, uint64_t w1, double *C0, double *C1, 
     }
 }
 
-void itransform(double Qstep, uint64_t w0, uint64_t w1, double *C0, double *C1, double *CT0, double *CT1, size_t K)
+void itransform(int64_t Qstep, uint64_t w0, uint64_t w1, double *C0, double *C1, double *CT0, double *CT1, size_t K)
 {
-    double  b = (double) w1/(w0+w1);
-    Qstep = sqrtIF(Qstep*(0x1<<INTEGER_STEPSIZE_PRECISION), w0, w1);
-    Qstep /= 0x1<<INTEGER_STEPSIZE_PRECISION;
+    int64_t  b = (w1<<INTEGER_TRANSFORM_PRECISION)/(w0+w1);
+    Qstep = sqrtIF(Qstep<<INTEGER_STEPSIZE_PRECISION, w0, w1);
+
+    int64_t I0, I1, IT0, IT1;
 
     while( K-- )
     {
+        IT0 = (*CT0)*(0x1<<INTEGER_TRANSFORM_PRECISION);
+        IT1 = (*CT1)*(0x1<<INTEGER_TRANSFORM_PRECISION);
+
 #if INVERSE_SQUARE_ROOT
         *C0 = (*CT0) - roundP((b*(*CT1))/Qstep);
         *C1 = (*CT1)/Qstep + (*C0);
 #else
-        *C0 = (*CT0) - roundP(b*(*CT1)*Qstep);
-        *C1 = (*CT1)*Qstep + (*C0);
+        I0 = IT0 - (((b*IT1)/(0x1<<INTEGER_TRANSFORM_PRECISION))*Qstep)/(0x1<<INTEGER_STEPSIZE_PRECISION);
+        I1 = (IT1*Qstep)/(0x1<<INTEGER_STEPSIZE_PRECISION) + I0;
 #endif
+        *C0 = I0;
+        *C1 = I1;
+        *C0 /= 0x1<<INTEGER_TRANSFORM_PRECISION;
+        *C1 /= 0x1<<INTEGER_TRANSFORM_PRECISION;
 
         C0++;
         C1++;
