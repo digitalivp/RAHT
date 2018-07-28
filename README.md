@@ -20,8 +20,7 @@ Their usage, how to compile the executable and testing is described below
 **Usage**    | **Description**
 ------------ | -------------
 ```RAHT_cod()```                 | prints help information
-```CT = RAHT_cod(V, C, depth)``` | computes the transformed coefficients. The coefficients are not quantized and not coded to any file
-```CT = RAHT_cod(V, C, depth, filename, Qstep)``` | transforms the coefficients and write the coded data to the file given by "filename" with the given quantization step. The output is optional and is not quantized. Only the coefficients writen to file are quantized
+```RAHT_cod(V, C, depth, filename, Qstep)``` | transforms the coefficients and write the coded data to the file given by "filename" with the given quantization step.
 
 **INPUTS**     | **Description**
 -------------- | -------------
@@ -30,23 +29,18 @@ Their usage, how to compile the executable and testing is described below
 ```depth```    | (*1x1 double value*) the depth of the octree to be used for the transform. It needs to be an integer value grater than 0
 ```filename``` | (*string of chars*) file name
 ```Qstep```    | (*1x1 double value*) quantization step. It is dependent of the color range
-**OUTPUT**   | 
-```CT``` | (*Nx3 double matrix*) transformed colors coefficients
 
 ### RAHT_dec (Region Adaptive Hierarchical Transform decoder)
 
 **Usage**    | **Description**
 ------------ | -------------
 ```RAHT_dec()```                 | prints help information
-```C = RAHT_dec(V, CT, depth)``` | performs the inverse transform from the given coefficients
 ```C = RAHT_dec(V, filename)```  | decodes the data from the given file
 
 **INPUTS**   | **Description**
 ------------ | -------------
 ```V```     | (*Nx3 double matrix*) vertices of each voxel in the order (X, Y, Z). The values should be non negative integers
-```CT```    | (*Nx3 double matrix*) transformed color coefficients
-```depth``` | (*1x1 double value*) the depth of the octree to be used for the transform. It
-**OUTPUT** | 
+**OUTPUT**  | 
 ```C```     | (*Nx3*) colors associated to each voxel
 
 # Compilation
@@ -103,8 +97,7 @@ mex( ...
 ```
     
 # FOR TESTING, ON MATLAB EXECUTE:
-## Test 1: CODER AND DECODER
-This test will compute the transformed coefficients that will be writen to file 'test.bin', decode the colors matrix from file and display the resulting Root Mean Squared Error. The RMSE is higher in this case due to quantization
+This test will compute the transformed coefficients that will be writen to file 'test.raht', decode the colors matrix from file and display the resulting Root Mean Squared Error.
 
 ```matlab
 load test.mat
@@ -115,17 +108,5 @@ s = dir('test.raht');
 fprintf('Bytes: %d\n', s.bytes);
 ```
 Expected result:
-> RMSE: 2.88745
-> Bytes: 987428
-
-## Test 2: ONLY APPLY HAAR3D TRANSFORM
-This test will only compute the transformed coefficients and its inverse and display the resulting Root Mean Squared Error
-
-```matlab
-load test.mat
-CT = RAHT_cod(V, C, 9);
-C2 = RAHT_dec(V, CT, 9);
-fprintf('RMSE: %g\n', sqrt(mean((C2(:)-C(:)).^2)))
-```
-Expected result:
-> RMSE: 7.09696e-14
+> RMSE: 2.8878
+> Bytes: 987402

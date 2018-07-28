@@ -92,7 +92,7 @@ void transform(int64_t Qstep, uint64_t w0, uint64_t w1, int64_t *C0, int64_t *C1
         *CT0 = (*C0) + (b*(*CT1))/(0x1<<INTEGER_TRANSFORM_PRECISION);
 
 #if INVERSE_SQUARE_ROOT
-        IT1 = IT1*Qstep/(0x1<<INTEGER_STEPSIZE_PRECISION);
+        *CT1 = ((*CT1)*Qstep)/(0x1<<INTEGER_STEPSIZE_PRECISION);
 #else
         *CT1 = ((*CT1)*(0x1<<INTEGER_STEPSIZE_PRECISION))/Qstep;
 #endif
@@ -113,8 +113,8 @@ void itransform(int64_t Qstep, uint64_t w0, uint64_t w1, int64_t *C0, int64_t *C
     while( K-- )
     {
 #if INVERSE_SQUARE_ROOT
-        *C0 = (*CT0) - roundP((b*(*CT1))/Qstep);
-        *C1 = (*CT1)/Qstep + (*C0);
+        *C0 = (*CT0) - (((b*(*CT1))/(0x1<<INTEGER_TRANSFORM_PRECISION))*(0x1<<INTEGER_STEPSIZE_PRECISION))/Qstep;
+        *C1 = ((*CT1)*(0x1<<INTEGER_STEPSIZE_PRECISION))/Qstep + (*C0);
 #else
         *C0 = (*CT0) - (((b*(*CT1))/(0x1<<INTEGER_TRANSFORM_PRECISION))*Qstep)/(0x1<<INTEGER_STEPSIZE_PRECISION);
         *C1 = ((*CT1)*Qstep)/(0x1<<INTEGER_STEPSIZE_PRECISION) + (*C0);
@@ -144,7 +144,7 @@ void copyFromMEM(uint64_t *IN_VAL, uint64_t *IN_W, uint64_t *OUT_VAL, uint64_t *
  * plhs[0] = mxCreateDoubleMatrix(NN, 3, mxREAL);
  * double	*outCT = mxGetPr(plhs[0])
  */
-void haar3D(int64_t Qstep, double *inV, double *inC, size_t K, size_t N, size_t depth, double *outCT, double *outW)
+void haar3D(int64_t Qstep, double *inV, double *inC, size_t K, size_t N, size_t depth, intmax_t *outCT)
 {
     size_t	NN=N;
     size_t	M=N, S, d, i, j;
@@ -224,23 +224,15 @@ void haar3D(int64_t Qstep, double *inV, double *inC, size_t K, size_t N, size_t 
     // Quantization of DC coefficients
     Qstep = sqrtIF(Qstep, w[0]);
     for(size_t k=0; k<K; k++)
+#if INVERSE_SQUARE_ROOT
+        C[k] = roundIF((C[k]*Qstep)/(0x1<<INTEGER_STEPSIZE_PRECISION));
+#else
         C[k] = roundIF((C[k]*(0x1<<INTEGER_STEPSIZE_PRECISION))/Qstep);
+#endif
 
-    if( outW!=NULL )
-    {
-        for(i=0; i<NN; i++)
-        {
-            for(size_t k=0; k<K; k++)
-                outCT[i+k*NN] = C[i*K+k];
-            outW[i] = w[i];
-        }
-    }
-    else
-    {
-        for(i=0; i<NN; i++)
-            for(size_t k=0; k<K; k++)
-                outCT[i+k*NN] = C[i*K+k];
-    }
+    for(i=0; i<NN; i++)
+        for(size_t k=0; k<K; k++)
+            outCT[i+k*NN] = C[i*K+k];
 
     free(w);
     free(C);
@@ -280,7 +272,11 @@ void inv_haar3D(int64_t Qstep, double *inV, double *inCT, size_t K, size_t N, si
     {
         int64_t Qstep2 = sqrtIF(Qstep, N);
         for(size_t k=0; k<K; k++)
+#if INVERSE_SQUARE_ROOT
+            CT[k] = (CT[k]*(0x1<<INTEGER_STEPSIZE_PRECISION))/Qstep2;
+#else
             CT[k] = (CT[k]*Qstep2)/(0x1<<INTEGER_STEPSIZE_PRECISION);
+#endif
     }
 
     for(i=0; i<N; i++)

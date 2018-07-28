@@ -79,6 +79,6 @@ void mexFunction(int nlhs, mxArray *plhs[],
 	plhs[0] = mxCreateDoubleMatrix(mxGetM(prhs[0]), K, mxREAL);
     inv_haar3D(Qstep, mxGetPr(prhs[0]), CT, K, mxGetM(prhs[0]), depth, mxGetPr(plhs[0]));
 
-	if( nrhs==2 )
-		free(CT);
+    if( nrhs==2 )
+        free(CT);
 }

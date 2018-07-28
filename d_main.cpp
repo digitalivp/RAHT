@@ -39,8 +39,8 @@ void mexFunction(int nlhs, mxArray *plhs[],
     }
     if( nrhs!=5 )
         mexErrMsgTxt("Expected 5 inputs");
-    if( nlhs>2 )
-		mexErrMsgTxt("Expected 1 or 2 outputs");
+    if( nlhs )
+        mexErrMsgTxt("Expected no outputs");
     if( mxGetClassID(prhs[0])!=mxDOUBLE_CLASS ||
             mxGetClassID(prhs[1])!=mxDOUBLE_CLASS ||
             mxGetClassID(prhs[2])!=mxDOUBLE_CLASS )
@@ -71,14 +71,10 @@ void mexFunction(int nlhs, mxArray *plhs[],
     Qstep *= 0x1<<INTEGER_STEPSIZE_PRECISION;
 
 	// Haar3d transform
-	plhs[0] = mxCreateDoubleMatrix(mxGetM(prhs[0]), mxGetN(prhs[1]), mxREAL);
-    if(nlhs==2)
-    {
-        plhs[1] = mxCreateDoubleMatrix(mxGetM(prhs[0]), 1, mxREAL);
-        haar3D(Qstep, mxGetPr(prhs[0]), mxGetPr(prhs[1]), mxGetN(prhs[1]), mxGetM(prhs[1]), *mxGetPr(prhs[2]), mxGetPr(plhs[0]), mxGetPr(plhs[1]));
-    }
-    else
-        haar3D(Qstep, mxGetPr(prhs[0]), mxGetPr(prhs[1]), mxGetN(prhs[1]), mxGetM(prhs[1]), *mxGetPr(prhs[2]), mxGetPr(plhs[0]));
+    size_t      N = mxGetM(prhs[1])*mxGetN(prhs[1]);
+    size_t      depth = *mxGetPr(prhs[2]);
+    intmax_t    *data = (intmax_t *) malloc( N*sizeof(intmax_t) );
+    haar3D(Qstep, mxGetPr(prhs[0]), mxGetPr(prhs[1]), mxGetN(prhs[1]), mxGetM(prhs[1]), depth, data);
 
 	// Encode file
     char    *filename = mxArrayToString(prhs[3]);
@@ -91,19 +87,11 @@ void mexFunction(int nlhs, mxArray *plhs[],
         mexErrMsgTxt("Unable to open file");
     }
 
-    size_t      N = mxGetM(prhs[1])*mxGetN(prhs[1]);
-    intmax_t    *data = (intmax_t *) malloc( N*sizeof(intmax_t) );
-    double      *CT = mxGetPr(plhs[0]);
-    size_t      depth = *mxGetPr(prhs[2]);
-
     // write header
     fid->grWrite(mxGetM(prhs[1]), 20);
     fid->grWrite(mxGetN(prhs[1]), 3);
     fid->grWrite(depth-1, 4);
     fid->write(Qstep, 64);
-
-    while( N-- )
-        data[N] = round(CT[N]);
 
     fid->rlgrWrite(data, mxGetM(prhs[1])*mxGetN(prhs[1]));
     delete fid;

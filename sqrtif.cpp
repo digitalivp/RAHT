@@ -19,17 +19,15 @@ int64_t __sqrtIF(int64_t P)
     }
 
     // Newton-Raphson
-COMPUTE_ERROR:
-    error = (P/A-A)/2;
-    if( error )
-        goto UPDATE_VALUE;
-    return A;
-
-UPDATE_VALUE:
-    A += error;
-    if( !A )
-        A = 1;
-    goto COMPUTE_ERROR;
+    while( 1 )
+    {
+        error = (P/A-A)/2;
+        if( !error )
+            return A;
+        A += error;
+        if( !A )
+            A = 1;
+    }
 }
 
 int64_t sqrtIF(int64_t A, int64_t W0, int64_t W1)
