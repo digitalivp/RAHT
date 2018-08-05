@@ -12,8 +12,7 @@ fixedPoint::fixedPoint(int64_t val)
 
 void fixedPoint::operator = (double val)
 {
-    this->val = (val*(0x1<<(NUMBER_OF_PRECISION_BITS+1))) + 1;
-    this->val >>= 1;
+    this->val = (val*(0x1<<NUMBER_OF_PRECISION_BITS)) + 0.5;
 }
 
 void fixedPoint::operator = (const fixedPoint *that)
@@ -58,12 +57,17 @@ void fixedPoint::operator *= (const fixedPoint &that)
 {
     this->val *= that.val;
 
+#if USE_ROUNDING_STEAD_OF_FLOORING
     if( this->val>0 )
-    {
         this->val = +(+this->val + (0x1<<(NUMBER_OF_PRECISION_BITS-1)))>>NUMBER_OF_PRECISION_BITS;
-    }
     else
         this->val = -(-this->val + (0x1<<(NUMBER_OF_PRECISION_BITS-1)))>>NUMBER_OF_PRECISION_BITS;
+#else
+    if( this->val>0 )
+        this->val >>= NUMBER_OF_PRECISION_BITS;
+    else
+        this->val = -(-this->val)>>NUMBER_OF_PRECISION_BITS;
+#endif
 }
 
 void fixedPoint::operator /= (const fixedPoint &that)
@@ -83,12 +87,16 @@ void fixedPoint::operator /= (const fixedPoint &that)
 
     if( that.val>0 )
     {
-        this->val += that.val>>1;
+#if USE_ROUNDING_STEAD_OF_FLOORING
+        this->val += (1+that.val)>>1;
+#endif
         this->val /= that.val;
     }
     else
     {
-        this->val += (-that.val)>>1;
+#if USE_ROUNDING_STEAD_OF_FLOORING
+        this->val += (1-that.val)>>1;
+#endif
         this->val /= -that.val;
         sign_flag = sign_flag ? 0 : 1;
     }

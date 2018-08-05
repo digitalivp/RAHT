@@ -3,7 +3,8 @@
 
 #include <stdint.h>
 
-#define NUMBER_OF_PRECISION_BITS    9
+#define NUMBER_OF_PRECISION_BITS        9
+#define USE_ROUNDING_STEAD_OF_FLOORING  1
 
 class fixedPoint
 {
