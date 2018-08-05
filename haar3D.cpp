@@ -67,8 +67,12 @@ void transform(fixedPoint Qstep, uint64_t w0, uint64_t w1, fixedPoint *C0, fixed
 
     while( K-- )
     {
-        *CT1 = (*C1) - (*C0);
-        *CT0 = (*C0) + (b*(*CT1));
+        *CT1 =  *C1;
+        *CT1 -= *C0;
+
+        *CT0 =  *CT1;
+        *CT0 *= b;
+        *CT0 += *C0;
 
 #if INVERSE_SQUARE_ROOT
         *CT1 *= Qstep;
@@ -92,11 +96,25 @@ void itransform(fixedPoint Qstep, uint64_t w0, uint64_t w1, fixedPoint *C0, fixe
     while( K-- )
     {
 #if INVERSE_SQUARE_ROOT
-        *C0 = (*CT0) - (b*(*CT1))/Qstep;
-        *C1 = (*CT1)/Qstep + (*C0);
+        *C0 =  *CT1;
+        *C0 *= b;
+        *C0 /= Qstep;
+        *C0 -= *CT0;
+        C0->val = -C0->val;
+
+        *C1 =  *CT1;
+        *C1 /= Qstep;
+        *C1 += *C0;
 #else
-        *C0 = (*CT0) - (b*(*CT1))*Qstep;
-        *C1 = (*CT1)*Qstep + (*C0);
+        *C0 =  *CT1;
+        *C0 *= b;
+        *C0 *= Qstep;
+        *C0 -= *CT0;
+        C0->val = -C0->val;
+
+        *C1 =  *CT1;
+        *C1 *= Qstep;
+        *C1 += *C0;
 #endif
 
         C0++;
