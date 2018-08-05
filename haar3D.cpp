@@ -8,7 +8,7 @@ struct mem
 
 bool compari(const mem &A, const mem &B) {return A.val < B.val;}
 
-void copyAsort(double *VX, double *CX, size_t K, size_t N, int64_t *C, uint64_t *W, uint64_t *val, uint64_t *ord)
+void copyAsort(double *VX, size_t N, uint64_t *W, uint64_t *val, uint64_t *ord)
 {
     mem			*MEM = (mem *) malloc( N*sizeof(mem) );
     double		*VY = VX+N, *VZ = VY+N;
@@ -45,12 +45,8 @@ void copyAsort(double *VX, double *CX, size_t K, size_t N, int64_t *C, uint64_t 
                 ((0x100000 & vx)<<40) + ((0x100000 & vy)<<41) + ((0x100000 & vz)<<42);
         MEM[i].ord = i;
 
-        for(size_t k=0; k<K; k++)
-            *(C++) = CX[i+k*N]*(0x1<<INTEGER_TRANSFORM_PRECISION);
-
         W[i] = 1;
     }
-    //
 
     std::sort(MEM, MEM+N, compari);
 
@@ -63,40 +59,22 @@ void copyAsort(double *VX, double *CX, size_t K, size_t N, int64_t *C, uint64_t 
     free(MEM);
 }
 
-int64_t roundIF(int64_t X)
+void transform(fixedPoint Qstep, uint64_t w0, uint64_t w1, fixedPoint *C0, fixedPoint *C1, fixedPoint *CT0, fixedPoint *CT1, size_t K)
 {
-    if( X>=0 )
-    {
-        X >>= INTEGER_TRANSFORM_PRECISION-1;
-        if( X&0x1 )
-            return (X>>1)+1;
-        return X>>1;
-    }
-    else
-    {
-        X = (-X)>>(INTEGER_TRANSFORM_PRECISION-1);
-        if( X&0x1 )
-            return -(X>>1)-1;
-        return -(X>>1);
-    }
-}
-
-void transform(int64_t Qstep, uint64_t w0, uint64_t w1, int64_t *C0, int64_t *C1, int64_t *CT0, int64_t *CT1, size_t K)
-{
-    int64_t  b = (w1<<INTEGER_TRANSFORM_PRECISION)/(w0+w1);
-    Qstep = sqrtIF(Qstep, w0, w1);
+    fixedPoint  b;
+    b.val = (w1<<NUMBER_OF_PRECISION_BITS)/(w0+w1);
+    Qstep.val = sqrtIF(Qstep.val, w0, w1);
 
     while( K-- )
     {
         *CT1 = (*C1) - (*C0);
-        *CT0 = (*C0) + (b*(*CT1))/(0x1<<INTEGER_TRANSFORM_PRECISION);
+        *CT0 = (*C0) + (b*(*CT1));
 
 #if INVERSE_SQUARE_ROOT
-        *CT1 = ((*CT1)*Qstep)/(0x1<<INTEGER_STEPSIZE_PRECISION);
+        *CT1 *= Qstep;
 #else
-        *CT1 = ((*CT1)*(0x1<<INTEGER_STEPSIZE_PRECISION))/Qstep;
+        *CT1 /= Qstep;
 #endif
-        *CT1 = roundIF(*CT1);
 
         C0++;
         C1++;
@@ -105,19 +83,20 @@ void transform(int64_t Qstep, uint64_t w0, uint64_t w1, int64_t *C0, int64_t *C1
     }
 }
 
-void itransform(int64_t Qstep, uint64_t w0, uint64_t w1, int64_t *C0, int64_t *C1, int64_t *CT0, int64_t *CT1, size_t K)
+void itransform(fixedPoint Qstep, uint64_t w0, uint64_t w1, fixedPoint *C0, fixedPoint *C1, fixedPoint *CT0, fixedPoint *CT1, size_t K)
 {
-    int64_t  b = (w1<<INTEGER_TRANSFORM_PRECISION)/(w0+w1);
-    Qstep = sqrtIF(Qstep, w0, w1);
+    fixedPoint  b;
+    b.val = (w1<<NUMBER_OF_PRECISION_BITS)/(w0+w1);
+    Qstep.val = sqrtIF(Qstep.val, w0, w1);
 
     while( K-- )
     {
 #if INVERSE_SQUARE_ROOT
-        *C0 = (*CT0) - (((b*(*CT1))/(0x1<<INTEGER_TRANSFORM_PRECISION))*(0x1<<INTEGER_STEPSIZE_PRECISION))/Qstep;
-        *C1 = ((*CT1)*(0x1<<INTEGER_STEPSIZE_PRECISION))/Qstep + (*C0);
+        *C0 = (*CT0) - (b*(*CT1))/Qstep;
+        *C1 = (*CT1)/Qstep + (*C0);
 #else
-        *C0 = (*CT0) - (((b*(*CT1))/(0x1<<INTEGER_TRANSFORM_PRECISION))*Qstep)/(0x1<<INTEGER_STEPSIZE_PRECISION);
-        *C1 = ((*CT1)*Qstep)/(0x1<<INTEGER_STEPSIZE_PRECISION) + (*C0);
+        *C0 = (*CT0) - (b*(*CT1))*Qstep;
+        *C1 = (*CT1)*Qstep + (*C0);
 #endif
 
         C0++;
@@ -137,32 +116,26 @@ void copyFromMEM(uint64_t *IN_VAL, uint64_t *IN_W, uint64_t *OUT_VAL, uint64_t *
     }
 }
 
-/* uint64	N = mxGetM(prhs[0]);
- * uint64	depth = *mxGetPr(prhs[2])
- * double	*inV = mxGetPr(prhs[0]);
- * double	*inC = mxGetPr(prhs[1]);
- * plhs[0] = mxCreateDoubleMatrix(NN, 3, mxREAL);
- * double	*outCT = mxGetPr(plhs[0])
- */
-void haar3D(int64_t Qstep, double *inV, double *inC, size_t K, size_t N, size_t depth, intmax_t *outCT)
+void haar3D(fixedPoint Qstep, double *inV, double *inC, size_t K, size_t N, size_t depth, int64_t *outCT)
 {
     size_t	NN=N;
     size_t	M=N, S, d, i, j;
     depth *= 3;
 
-    int64_t		*C	  = (int64_t   *) malloc( N*K*sizeof(int64_t) );
-    int64_t		*CT   = (int64_t   *) malloc( N*K*sizeof(int64_t) );
-    uint64_t	*w	  = (uint64_t  *) malloc( N*sizeof(uint64_t) );
-    uint64_t	*wT   = (uint64_t  *) malloc( N*sizeof(uint64_t) );
-    uint64_t	*val  = (uint64_t  *) malloc( N*sizeof(uint64_t) );
-    uint64_t	*valT = (uint64_t  *) malloc( N*sizeof(uint64_t) );
-    uint64_t	*TMP  = (uint64_t  *) malloc( N*sizeof(uint64_t) );
-    int64_t		*TPV;
+    fixedPoint  *C	  = (fixedPoint *) malloc( N*K*sizeof(fixedPoint) );
+    fixedPoint  *CT   = (fixedPoint *) malloc( N*K*sizeof(fixedPoint) );
+    uint64_t	*w	  = (uint64_t   *) malloc( N*sizeof(uint64_t) );
+    uint64_t	*wT   = (uint64_t   *) malloc( N*sizeof(uint64_t) );
+    uint64_t	*val  = (uint64_t   *) malloc( N*sizeof(uint64_t) );
+    uint64_t	*valT = (uint64_t   *) malloc( N*sizeof(uint64_t) );
+    uint64_t	*TMP  = (uint64_t   *) malloc( N*sizeof(uint64_t) );
+    fixedPoint  *TPV;
 
-    copyAsort(inV, inC, K, N, CT, w, val, TMP);
+    copyAsort(inV, N, w, val, TMP);
     for(i=0; i<N; i++)
         for(size_t k=0; k<K; k++)
-            C[i*K+k] = CT[TMP[i]*K+k];
+            *(C++) = inC[TMP[i]+k*N];
+    C -= N*K;
     free(TMP);
 
     for(d=0; d<depth; d++)
@@ -222,71 +195,66 @@ void haar3D(int64_t Qstep, double *inV, double *inC, size_t K, size_t N, size_t 
     free(valT);
 
     // Quantization of DC coefficients
-    Qstep = sqrtIF(Qstep, w[0]);
+    Qstep.val = sqrtIF(Qstep.val, w[0]);
     for(size_t k=0; k<K; k++)
 #if INVERSE_SQUARE_ROOT
-        C[k] = roundIF((C[k]*Qstep)/(0x1<<INTEGER_STEPSIZE_PRECISION));
+        C[k] *= Qstep;
 #else
-        C[k] = roundIF((C[k]*(0x1<<INTEGER_STEPSIZE_PRECISION))/Qstep);
+        C[k] /= Qstep;
 #endif
 
     for(i=0; i<NN; i++)
         for(size_t k=0; k<K; k++)
-            outCT[i+k*NN] = C[i*K+k];
+            outCT[i+k*NN] = (C++)->round();
+    C -= NN*K;
 
     free(w);
     free(C);
     free(CT);
 }
 
-/* uint64	N = mxGetM(prhs[0])
- * uint64	depth = *mxGetPr(prhs[2]);
- * double	*inV = mxGetPr(prhs[0]);
- * double	*inCT = mxGetPr(prhs[1]);
- * plhs[0] = mxCreateDoubleMatrix(NN, 3, mxREAL);
- * double	*outC = mxGetPr(plhs[0])
- */
-void inv_haar3D(int64_t Qstep, double *inV, double *inCT, size_t K, size_t N, size_t depth, double *outC)
+void inv_haar3D(fixedPoint Qstep, double *inV, int64_t *inCT, size_t K, size_t N, size_t depth, double *outC)
 {
     size_t	NN=N;
     size_t	M=N, S, d, i, j;
     depth *= 3;
 
-    int64_t		*C	  = (int64_t   *) malloc( N*K*sizeof(int64_t) );
-    int64_t		*CT   = (int64_t   *) malloc( N*K*sizeof(int64_t) );
-    uint64_t	*w	  = (uint64_t  *) malloc( N*sizeof(uint64_t) );
-    uint64_t	*wT   = (uint64_t  *) malloc( N*sizeof(uint64_t) );
-    uint64_t	*val  = (uint64_t  *) malloc( N*sizeof(uint64_t) );
-    uint64_t	*valT = (uint64_t  *) malloc( N*sizeof(uint64_t) );
-    uint64_t	*ord  = (uint64_t  *) malloc( N*sizeof(uint64_t) );
+    fixedPoint  *C	  = (fixedPoint *) malloc( N*K*sizeof(fixedPoint) );
+    fixedPoint  *CT   = (fixedPoint *) malloc( N*K*sizeof(fixedPoint) );
+    uint64_t    *w	  = (uint64_t   *) malloc( N*sizeof(uint64_t) );
+    uint64_t    *wT   = (uint64_t   *) malloc( N*sizeof(uint64_t) );
+    uint64_t    *val  = (uint64_t   *) malloc( N*sizeof(uint64_t) );
+    uint64_t    *valT = (uint64_t   *) malloc( N*sizeof(uint64_t) );
+    uint64_t    *ord  = (uint64_t   *) malloc( N*sizeof(uint64_t) );
 
-    uint64_t	**VAL = (uint64_t **) malloc( depth*sizeof(uint64_t *) );
-    uint64_t	**iW  = (uint64_t **) malloc( depth*sizeof(uint64_t *) );
-    size_t		*iM   = (size_t    *) malloc( depth*sizeof(size_t) );
+    uint64_t    **VAL = (uint64_t  **) malloc( depth*sizeof(uint64_t *) );
+    uint64_t    **iW  = (uint64_t  **) malloc( depth*sizeof(uint64_t *) );
+    size_t      *iM   = (size_t     *) malloc( depth*sizeof(size_t) );
 
-    uint64_t  *TMP;
+    uint64_t    *TMP;
 
-    copyAsort(inV, inCT, K, N, CT, w, val, ord);
+    copyAsort(inV, N, w, val, ord);
+    for(i=0; i<N; i++)
+        for(size_t k=0; k<K; k++)
+            *(CT++) = inCT[i+k*N];
+    CT -= N*K;
 
     // Dequantization of DC coefficients
     {
-        int64_t Qstep2 = sqrtIF(Qstep, N);
+        fixedPoint Qstep2;
+        Qstep2.val = sqrtIF(Qstep.val, N);
         for(size_t k=0; k<K; k++)
 #if INVERSE_SQUARE_ROOT
-            CT[k] = (CT[k]*(0x1<<INTEGER_STEPSIZE_PRECISION))/Qstep2;
+            CT[k] /= Qstep2;
 #else
-            CT[k] = (CT[k]*Qstep2)/(0x1<<INTEGER_STEPSIZE_PRECISION);
+            CT[k] *= Qstep2;
 #endif
     }
 
-    for(i=0; i<N; i++)
-        for(size_t k=0; k<K; k++)
-            C[i*K+k] = CT[i*K+k];
-
-    // Transformada direta (partes)
-    // executa a mesma ordem de passos da transformada direta, apenas armazenando
-    // os valores do pesos e do vetor de valor. Estes valores são armazenados para
-    // executar os passos em ordem inversa na transformada inversa
+    // Direct transform
+    // Execute some of the steps of the direct transform, storing weights and values
+    // for each iteration. These values are employed latter to perform the inverse
+    // transform
     for(d=0; d<depth; d++)
     {
         VAL[d] = (uint64_t *) malloc( M*sizeof(uint64_t) );
@@ -326,7 +294,7 @@ void inv_haar3D(int64_t Qstep, double *inV, double *inCT, size_t K, size_t N, si
         w   = TMP;
     }
 
-    // Transformada inversa
+    // Inverse transform
     while( d )
     {
         d--;
@@ -369,7 +337,6 @@ void inv_haar3D(int64_t Qstep, double *inV, double *inCT, size_t K, size_t N, si
                 CT[i*K+k] = C[i*K+k];
     }
 
-    // Copia dados para saida
     free(iM);
     free(iW);
     free(VAL);
@@ -379,11 +346,11 @@ void inv_haar3D(int64_t Qstep, double *inV, double *inCT, size_t K, size_t N, si
     free(w);
     free(CT);
 
-    //double *CX = outC, *CY = CX+NN, *CZ = CY+NN;
-
+    // Copy data to output
     for(i=0; i<NN; i++)
         for(size_t k=0; k<K; k++)
-            outC[ord[i]+NN*k] = (double) C[i*K+k]/(0x1<<INTEGER_TRANSFORM_PRECISION);
+            outC[ord[i]+NN*k] = (C++)->toDouble();
+    C -= NN*K;
 
     free(C);
     free(ord);

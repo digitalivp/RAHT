@@ -2,9 +2,9 @@
 
 int64_t __sqrtIF(int64_t P)
 {
-#if EMPLOY_STEP_CLEANING
-    if( P>=(0x1<<(2*INTEGER_STEPSIZE_PRECISION)) )
-        return 0x1<<INTEGER_STEPSIZE_PRECISION;
+#if INVERSE_SQUARE_ROOT && EMPLOY_STEP_CLEANING
+    if( P>>(2*NUMBER_OF_PRECISION_BITS) )
+        return 0x1<<NUMBER_OF_PRECISION_BITS;
 #endif
 
     int64_t error;
@@ -32,11 +32,10 @@ int64_t __sqrtIF(int64_t P)
 
 int64_t sqrtIF(int64_t A, int64_t W0, int64_t W1)
 {
-    A *= A;
 #if INVERSE_SQUARE_ROOT
-    return __sqrtIF((0x1<<(2*INTEGER_STEPSIZE_PRECISION))*(W0*W1)/(W0+W1) * (0x1<<(2*INTEGER_STEPSIZE_PRECISION))/A);
+    return __sqrtIF((0x1<<(2*NUMBER_OF_PRECISION_BITS))*(W0*W1)/(W0+W1) * (0x1<<(2*NUMBER_OF_PRECISION_BITS))/(A*A));
 #else
-    return __sqrtIF(A/W0 + A/W1);
+    return __sqrtIF((A*A*(W0+W1))/(W0*W1));
 #endif
 }
 
@@ -44,7 +43,7 @@ int64_t sqrtIF(int64_t A, int64_t W)
 {
     A *= A;
 #if INVERSE_SQUARE_ROOT
-    return __sqrtIF((0x1<<(2*INTEGER_STEPSIZE_PRECISION))*W/A*(0x1<<(2*INTEGER_STEPSIZE_PRECISION)));
+    return __sqrtIF((0x1<<(2*NUMBER_OF_PRECISION_BITS))*W/A*(0x1<<(2*NUMBER_OF_PRECISION_BITS)));
 #else
     return __sqrtIF(A/W);
 #endif

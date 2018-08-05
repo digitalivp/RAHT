@@ -10,6 +10,10 @@
 void mexFunction(int nlhs, mxArray *plhs[],
                  int nrhs, const mxArray *prhs[])
 {
+    fixedPoint  Qstep;
+    size_t      N;
+    size_t      depth;
+
     // Test inputs
     if( !nrhs && !nlhs )
     {
@@ -64,16 +68,15 @@ void mexFunction(int nlhs, mxArray *plhs[],
     if( mxGetNumberOfElements(prhs[4])!=1 )
         mexErrMsgTxt("Fifth input (aka Qstep) shoud have 1 element");
 
-    double  Qstep = *mxGetPr(prhs[4]);
-
-    if( Qstep<=0 )
+    Qstep = *mxGetPr(prhs[4]);
+    if( !(Qstep.val>>NUMBER_OF_PRECISION_BITS) )
         mexErrMsgTxt("Fifth input (aka Qstep) shoud be greater than 0");
-    Qstep *= 0x1<<INTEGER_STEPSIZE_PRECISION;
+
+    N = mxGetM(prhs[1])*mxGetN(prhs[1]);
+    depth = *mxGetPr(prhs[2]);
+    int64_t    *data = (int64_t *) malloc( N*sizeof(int64_t) );
 
 	// Haar3d transform
-    size_t      N = mxGetM(prhs[1])*mxGetN(prhs[1]);
-    size_t      depth = *mxGetPr(prhs[2]);
-    intmax_t    *data = (intmax_t *) malloc( N*sizeof(intmax_t) );
     haar3D(Qstep, mxGetPr(prhs[0]), mxGetPr(prhs[1]), mxGetN(prhs[1]), mxGetM(prhs[1]), depth, data);
 
 	// Encode file
@@ -91,7 +94,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
     fid->grWrite(mxGetM(prhs[1]), 20);
     fid->grWrite(mxGetN(prhs[1]), 3);
     fid->grWrite(depth-1, 4);
-    fid->write(Qstep, 64);
+    fid->write(Qstep.val, 64);
 
     fid->rlgrWrite(data, mxGetM(prhs[1])*mxGetN(prhs[1]));
     delete fid;

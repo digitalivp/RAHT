@@ -8,9 +8,10 @@
 void mexFunction(int nlhs, mxArray *plhs[],
                  int nrhs, const mxArray *prhs[])
 {
-	double	*CT;
-	size_t	depth;
-	size_t	K;
+    fixedPoint  Qstep;
+    size_t      N, K;
+    size_t      depth;
+    int64_t    *CT;
 
 	// Test inputs
 	if( !nrhs && !nlhs )
@@ -43,7 +44,6 @@ void mexFunction(int nlhs, mxArray *plhs[],
     if( mxGetClassID(prhs[1])!=mxCHAR_CLASS )
         mexErrMsgTxt("Second input (aka filename) should be a char string");
 
-    int64_t  Qstep;
     char    *filename = mxArrayToString(prhs[1]);
     file    *fid = new file(filename, 0);
     mxFree(filename);
@@ -54,30 +54,24 @@ void mexFunction(int nlhs, mxArray *plhs[],
         mexErrMsgTxt("Unable to open file");
     }
 
-    size_t	N = fid->grRead(20);
+    N = fid->grRead(20);
     K = fid->grRead(3);
     depth = fid->grRead(4)+1;
-    Qstep = fid->read(64);
+    Qstep.val = fid->read(64);
 
     if( mxGetM(prhs[0])!=N || depth<=0 )
         mexErrMsgTxt("First input (aka V) and the given file seem to be incompatible");
 
-    N *= K;
-    intmax_t	*data = (intmax_t *) malloc( N*sizeof(intmax_t) );
-    CT = (double *) malloc( N*sizeof(double) );
+    CT = (int64_t *) malloc( N*K*sizeof(int64_t) );
 
-    fid->rlgrRead(data, N);
+    fid->rlgrRead(CT, N*K);
     if( !fid->eof() )
         mexWarnMsgTxt("The given file seens to be incompatible with the given geometry");
     delete fid;
 
-    while( N-- )
-        CT[N] = data[N];
-    free(data);
-
 	// Inverse transform
-	plhs[0] = mxCreateDoubleMatrix(mxGetM(prhs[0]), K, mxREAL);
-    inv_haar3D(Qstep, mxGetPr(prhs[0]), CT, K, mxGetM(prhs[0]), depth, mxGetPr(plhs[0]));
+    plhs[0] = mxCreateDoubleMatrix(N, K, mxREAL);
+    inv_haar3D(Qstep, mxGetPr(prhs[0]), CT, K, N, depth, mxGetPr(plhs[0]));
 
     if( nrhs==2 )
         free(CT);
