@@ -69,7 +69,8 @@ void mexFunction(int nlhs, mxArray *plhs[],
         mexErrMsgTxt("Fifth input (aka Qstep) shoud have 1 element");
 
     Qstep = *mxGetPr(prhs[4]);
-    if( !(Qstep.val>>NUMBER_OF_PRECISION_BITS) )
+
+    if( Qstep.toDouble()<0 )
         mexErrMsgTxt("Fifth input (aka Qstep) shoud be greater than 0");
 
     N = mxGetM(prhs[1])*mxGetN(prhs[1]);

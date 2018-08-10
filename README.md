@@ -112,5 +112,5 @@ s = dir('test.raht');
 fprintf('Bytes: %d\n', s.bytes);
 ```
 Expected result:
-> RMSE: 2.95459
-> Bytes: 986430
+> RMSE: 2.95404
+> Bytes: 986760

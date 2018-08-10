@@ -1,46 +1,44 @@
 #include "fixedpoint.h"
 
-fixedPoint::fixedPoint()
-{
-    this->val = 0;
-}
-
-fixedPoint::fixedPoint(int64_t val)
-{
-    this->val = val;
-}
-
-void fixedPoint::operator = (double val)
-{
-    this->val = (val*(0x1<<NUMBER_OF_PRECISION_BITS)) + 0.5;
-}
-
-void fixedPoint::operator = (const fixedPoint *that)
+fixedPoint::fixedPoint(const fixedPoint *that)
 {
     this->val = that->val;
 }
 
-void fixedPoint::operator = (const fixedPoint &that)
+void fixedPoint::randon()
 {
-    this->val = that.val;
-}
-
-void fixedPoint::operator = (int64_t val)
-{
-    this->val = val;
-    *this <<= NUMBER_OF_PRECISION_BITS;
-}
-
-int64_t fixedPoint::round()
-{
-    if( this->val>0 )
-        return (this->val + (0x1<<(NUMBER_OF_PRECISION_BITS-1))) >> NUMBER_OF_PRECISION_BITS;
-    return -((-this->val + (0x1<<(NUMBER_OF_PRECISION_BITS-1))) >> NUMBER_OF_PRECISION_BITS);
+    if( rand()%2 )
+        this->val = -rand()%65536;
+    else
+        this->val = rand()%65536;
 }
 
 double fixedPoint::toDouble()
 {
-    return (double) this->val / (0x1<<NUMBER_OF_PRECISION_BITS);
+    return (double) this->val/_fixedpoint_MUL;
+}
+
+int64_t fixedPoint::round()
+{
+    if( this->val > 0 )
+        return (_fixedpoint_RND + this->val)>>_fixedpoint_PRECISION;
+    return -((_fixedpoint_RND - this->val)>>_fixedpoint_PRECISION);
+}
+
+void fixedPoint::operator = (double val)
+{
+    if( val>0 )
+        this->val = val*_fixedpoint_MUL + 0.5;
+    else
+        this->val = val*_fixedpoint_MUL - 0.5;
+}
+
+void fixedPoint::operator = (int64_t val)
+{
+    if( val > 0 )
+        this->val = val<<_fixedpoint_PRECISION;
+    else
+        this->val = -((-val)<<_fixedpoint_PRECISION);
 }
 
 void fixedPoint::operator += (const fixedPoint &that)
@@ -57,140 +55,71 @@ void fixedPoint::operator *= (const fixedPoint &that)
 {
     this->val *= that.val;
 
-#if USE_ROUNDING_STEAD_OF_FLOORING
-    if( this->val>0 )
-        this->val = +(+this->val + (0x1<<(NUMBER_OF_PRECISION_BITS-1)))>>NUMBER_OF_PRECISION_BITS;
+    if( this->val > 0 )
+    {
+        this->val += _fixedpoint_RND;
+        this->val >>= _fixedpoint_PRECISION;
+    }
     else
-        this->val = -(-this->val + (0x1<<(NUMBER_OF_PRECISION_BITS-1)))>>NUMBER_OF_PRECISION_BITS;
-#else
-    if( this->val>0 )
-        this->val >>= NUMBER_OF_PRECISION_BITS;
-    else
-        this->val = -(-this->val)>>NUMBER_OF_PRECISION_BITS;
-#endif
+    {
+        this->val = _fixedpoint_RND - this->val;
+        this->val >>= _fixedpoint_PRECISION;
+        this->val = -this->val;
+    }
 }
 
 void fixedPoint::operator /= (const fixedPoint &that)
 {
-    uint8_t sign_flag;
+    uint8_t signflag = 0;
 
-    if( this->val>0 )
+    if( this->val < 0 )
     {
-        this->val <<= NUMBER_OF_PRECISION_BITS;
-        sign_flag = 0;
+        this->val = -this->val;
+        signflag = 1;
+    }
+
+    this->val <<= _fixedpoint_PRECISION;
+
+    if( that.val < 0 )
+    {
+        this->val += (-that.val)>>1;
+        this->val /= -that.val;
+        signflag = signflag ? 0 : 1;
     }
     else
     {
-        this->val = (-this->val)<<NUMBER_OF_PRECISION_BITS;
-        sign_flag = 1;
-    }
-
-    if( that.val>0 )
-    {
-#if USE_ROUNDING_STEAD_OF_FLOORING
-        this->val += (1+that.val)>>1;
-#endif
+        this->val += that.val>>1;
         this->val /= that.val;
     }
-    else
-    {
-#if USE_ROUNDING_STEAD_OF_FLOORING
-        this->val += (1-that.val)>>1;
-#endif
-        this->val /= -that.val;
-        sign_flag = sign_flag ? 0 : 1;
-    }
 
-    if( sign_flag )
+    if( signflag )
         this->val = -this->val;
 }
 
-void fixedPoint::operator >>= (const int k)
+fixedPoint fixedPoint::operator + (fixedPoint &that)
 {
-    if( this->val>0 )
-        this->val >>= k;
-    else
-        this->val = -((-this->val)>>k);
+    fixedPoint  res(this);
+    res += that;
+    return res;
 }
 
-void fixedPoint::operator <<= (const int k)
+fixedPoint fixedPoint::operator - (fixedPoint &that)
 {
-    if( this->val>0 )
-        this->val <<= k;
-    else
-        this->val = -((-this->val)<<k);
+    fixedPoint  res(this);
+    res -= that;
+    return res;
 }
 
-fixedPoint fixedPoint::operator + (const fixedPoint &that)
+fixedPoint fixedPoint::operator * (fixedPoint &that)
 {
-    fixedPoint ans(this->val);
-    ans += that;
-    return ans;
+    fixedPoint  res(this);
+    res *= that;
+    return res;
 }
 
-fixedPoint fixedPoint::operator - (const fixedPoint &that)
+fixedPoint fixedPoint::operator / (fixedPoint &that)
 {
-    fixedPoint ans(this->val);
-    ans -= that;
-    return ans;
-}
-
-fixedPoint fixedPoint::operator * (const fixedPoint &that)
-{
-    fixedPoint ans(this->val);
-    ans *= that;
-    return ans;
-}
-
-fixedPoint fixedPoint::operator / (const fixedPoint &that)
-{
-    fixedPoint ans(this->val);
-    ans /= that;
-    return ans;
-}
-
-fixedPoint fixedPoint::operator >> (const int k)
-{
-    fixedPoint ans(this->val);
-    ans >>= k;
-    return ans;
-}
-
-fixedPoint fixedPoint::operator << (const int k)
-{
-    fixedPoint ans(this->val);
-    ans <<= k;
-    return ans;
-}
-
-fixedPoint sqrt(const fixedPoint &S)
-{
-    fixedPoint error;
-    fixedPoint A;
-
-    // Initial guess
-    A.val = 1;
-    int64_t p = S.val<<NUMBER_OF_PRECISION_BITS;
-
-    while( p )
-    {
-        p >>= 2;
-        A.val <<= 1;
-    }
-
-    // Newton-Raphson
-    while( 1 )
-    {
-        error = S;
-        error /= A;
-        error -= A;
-        error >>= 1;
-
-        if( !error.val )
-            return A;
-
-        A += error;
-        if( !A.val )
-            A.val = 1;
-    }
+    fixedPoint  res(this);
+    res /= that;
+    return res;
 }

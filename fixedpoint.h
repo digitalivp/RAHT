@@ -2,43 +2,37 @@
 #define FIXEDPOINT_H
 
 #include <stdint.h>
+#include <stdlib.h>
 
-#define NUMBER_OF_PRECISION_BITS        9
-#define USE_ROUNDING_STEAD_OF_FLOORING  1
+#define _fixedpoint_PRECISION   8
+#define _fixedpoint_MUL         (0x1<<_fixedpoint_PRECISION)
+#define _fixedpoint_RND         (0x1<<(_fixedpoint_PRECISION-1))
 
 class fixedPoint
 {
 public:
     int64_t val;
 
-    fixedPoint();
-    fixedPoint(int64_t val);
+    fixedPoint() {}
+    fixedPoint(const fixedPoint *that);
+
+    void    randon();
+
+    double  toDouble();
+    int64_t round();
 
     void operator = (double val);
-    void operator = (const fixedPoint *that);
-    void operator = (const fixedPoint &that);
     void operator = (int64_t val);
-
-    int64_t round();
-    double  toDouble();
 
     void operator += (const fixedPoint &that);
     void operator -= (const fixedPoint &that);
     void operator *= (const fixedPoint &that);
     void operator /= (const fixedPoint &that);
 
-    void operator >>= (const int k);
-    void operator <<= (const int k);
-
-    fixedPoint operator + (const fixedPoint &that);
-    fixedPoint operator - (const fixedPoint &that);
-    fixedPoint operator * (const fixedPoint &that);
-    fixedPoint operator / (const fixedPoint &that);
-
-    fixedPoint operator >> (const int k);
-    fixedPoint operator << (const int k);
+    fixedPoint operator + (fixedPoint &that);
+    fixedPoint operator - (fixedPoint &that);
+    fixedPoint operator * (fixedPoint &that);
+    fixedPoint operator / (fixedPoint &that);
 };
-
-fixedPoint sqrt(const fixedPoint &S);
 
 #endif // FIXEDPOINT_H

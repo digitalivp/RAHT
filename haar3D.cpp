@@ -62,7 +62,7 @@ void copyAsort(double *VX, size_t N, uint64_t *W, uint64_t *val, uint64_t *ord)
 void transform(fixedPoint Qstep, uint64_t w0, uint64_t w1, fixedPoint *C0, fixedPoint *C1, fixedPoint *CT0, fixedPoint *CT1, size_t K)
 {
     fixedPoint  b;
-    b.val = (w1<<NUMBER_OF_PRECISION_BITS)/(w0+w1);
+    b.val = (w1<<_fixedpoint_PRECISION)/(w0+w1);
     Qstep.val = sqrtIF(Qstep.val, w0, w1);
 
     while( K-- )
@@ -90,7 +90,7 @@ void transform(fixedPoint Qstep, uint64_t w0, uint64_t w1, fixedPoint *C0, fixed
 void itransform(fixedPoint Qstep, uint64_t w0, uint64_t w1, fixedPoint *C0, fixedPoint *C1, fixedPoint *CT0, fixedPoint *CT1, size_t K)
 {
     fixedPoint  b;
-    b.val = (w1<<NUMBER_OF_PRECISION_BITS)/(w0+w1);
+    b.val = (w1<<_fixedpoint_PRECISION)/(w0+w1);
     Qstep.val = sqrtIF(Qstep.val, w0, w1);
 
     while( K-- )
