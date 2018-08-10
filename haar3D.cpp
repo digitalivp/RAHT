@@ -63,7 +63,7 @@ void transform(fixedPoint Qstep, uint64_t w0, uint64_t w1, fixedPoint *C0, fixed
 {
     fixedPoint  b;
     b.val = (w1<<_fixedpoint_PRECISION)/(w0+w1);
-    Qstep.val = sqrtIF(Qstep.val, w0, w1);
+    Qstep.val = _sqrt( ((Qstep.val*Qstep.val)*(w0+w1))/(w0*w1) );
 
     while( K-- )
     {
@@ -74,11 +74,7 @@ void transform(fixedPoint Qstep, uint64_t w0, uint64_t w1, fixedPoint *C0, fixed
         *CT0 *= b;
         *CT0 += *C0;
 
-#if INVERSE_SQUARE_ROOT
-        *CT1 *= Qstep;
-#else
         *CT1 /= Qstep;
-#endif
 
         C0++;
         C1++;
@@ -91,21 +87,10 @@ void itransform(fixedPoint Qstep, uint64_t w0, uint64_t w1, fixedPoint *C0, fixe
 {
     fixedPoint  b;
     b.val = (w1<<_fixedpoint_PRECISION)/(w0+w1);
-    Qstep.val = sqrtIF(Qstep.val, w0, w1);
+    Qstep.val = _sqrt( ((Qstep.val*Qstep.val)*(w0+w1))/(w0*w1) );
 
     while( K-- )
     {
-#if INVERSE_SQUARE_ROOT
-        *C0 =  *CT1;
-        *C0 *= b;
-        *C0 /= Qstep;
-        *C0 -= *CT0;
-        C0->val = -C0->val;
-
-        *C1 =  *CT1;
-        *C1 /= Qstep;
-        *C1 += *C0;
-#else
         *C0 =  *CT1;
         *C0 *= b;
         *C0 *= Qstep;
@@ -115,7 +100,6 @@ void itransform(fixedPoint Qstep, uint64_t w0, uint64_t w1, fixedPoint *C0, fixe
         *C1 =  *CT1;
         *C1 *= Qstep;
         *C1 += *C0;
-#endif
 
         C0++;
         C1++;
@@ -213,13 +197,9 @@ void haar3D(fixedPoint Qstep, double *inV, double *inC, size_t K, size_t N, size
     free(valT);
 
     // Quantization of DC coefficients
-    Qstep.val = sqrtIF(Qstep.val, w[0]);
+    Qstep.val = _sqrt( (Qstep.val*Qstep.val)/w[0] );
     for(size_t k=0; k<K; k++)
-#if INVERSE_SQUARE_ROOT
-        C[k] *= Qstep;
-#else
         C[k] /= Qstep;
-#endif
 
     for(i=0; i<NN; i++)
         for(size_t k=0; k<K; k++)
@@ -260,13 +240,9 @@ void inv_haar3D(fixedPoint Qstep, double *inV, int64_t *inCT, size_t K, size_t N
     // Dequantization of DC coefficients
     {
         fixedPoint Qstep2;
-        Qstep2.val = sqrtIF(Qstep.val, N);
+        Qstep2.val = _sqrt( (Qstep.val*Qstep.val)/N );
         for(size_t k=0; k<K; k++)
-#if INVERSE_SQUARE_ROOT
-            CT[k] /= Qstep2;
-#else
             CT[k] *= Qstep2;
-#endif
     }
 
     // Direct transform

@@ -7,11 +7,8 @@
 #include "mex.h"
 #include "fixedpoint.h"
 
-#define INVERSE_SQUARE_ROOT         1
-#define EMPLOY_STEP_CLEANING        0
-
-int64_t sqrtIF(int64_t A, int64_t W0, int64_t W1);
-int64_t sqrtIF(int64_t A, int64_t W);
+int64_t sqrtIF(int64_t A, uint64_t W0, uint64_t W1);
+int64_t sqrtIF(int64_t A, uint64_t W);
 
 void copyAsort(double *VX, double *CX, size_t N, double *C, uint64_t *W, uint64_t *val, uint64_t *ord);
 void haar3D(fixedPoint Qstep, double *inV, double *inC, size_t K, size_t N, size_t depth, int64_t *outCT);

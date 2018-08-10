@@ -7,10 +7,7 @@ fixedPoint::fixedPoint(const fixedPoint *that)
 
 void fixedPoint::randon()
 {
-    if( rand()%2 )
-        this->val = -rand()%65536;
-    else
-        this->val = rand()%65536;
+    this->val = rand()%_fixedpoint_MUL;
 }
 
 double fixedPoint::toDouble()
@@ -77,20 +74,14 @@ void fixedPoint::operator /= (const fixedPoint &that)
         this->val = -this->val;
         signflag = 1;
     }
-
     this->val <<= _fixedpoint_PRECISION;
 
     if( that.val < 0 )
-    {
         this->val += (-that.val)>>1;
-        this->val /= -that.val;
-        signflag = signflag ? 0 : 1;
-    }
     else
-    {
         this->val += that.val>>1;
-        this->val /= that.val;
-    }
+
+    this->val /= that.val;
 
     if( signflag )
         this->val = -this->val;
@@ -122,4 +113,29 @@ fixedPoint fixedPoint::operator / (fixedPoint &that)
     fixedPoint  res(this);
     res /= that;
     return res;
+}
+
+int64_t _sqrt(int64_t P)
+{
+    int64_t error;
+
+    // Initial guess
+    int64_t p = P;
+    int64_t A = 1;
+    while( p )
+    {
+        p >>= 2;
+        A <<= 1;
+    }
+
+    // Newton-Raphson
+    while( 1 )
+    {
+        error = (P/A-A)/2;
+        if( !error )
+            return A;
+        A += error;
+        if( !A )
+            A = 1;
+    }
 }
