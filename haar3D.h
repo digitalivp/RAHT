@@ -8,7 +8,7 @@
 #include "fixedpoint.h"
 
 #define INVERSE_SQUARE_ROOT         1
-#define EMPLOY_STEP_CLEANING        1
+#define EMPLOY_STEP_CLEANING        0
 
 int64_t sqrtIF(int64_t A, int64_t W0, int64_t W1);
 int64_t sqrtIF(int64_t A, int64_t W);
