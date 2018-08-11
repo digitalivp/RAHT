@@ -18,6 +18,7 @@ public:
     int64_t val;
 
     fixedPoint() {}
+    fixedPoint(const double val);
     fixedPoint(const fixedPoint *that);
 
     void    randon();
@@ -25,18 +26,18 @@ public:
     double  toDouble();
     int64_t round();
 
-    void operator = (double val);
-    void operator = (int64_t val);
+    void operator = (const double val);
+    void operator = (const int64_t val);
 
     void operator += (const fixedPoint &that);
     void operator -= (const fixedPoint &that);
     void operator *= (const fixedPoint &that);
     void operator /= (const fixedPoint &that);
 
-    fixedPoint operator + (fixedPoint &that);
-    fixedPoint operator - (fixedPoint &that);
-    fixedPoint operator * (fixedPoint &that);
-    fixedPoint operator / (fixedPoint &that);
+    fixedPoint operator + (const fixedPoint &that);
+    fixedPoint operator - (const fixedPoint &that);
+    fixedPoint operator * (const fixedPoint &that);
+    fixedPoint operator / (const fixedPoint &that);
 };
 
 int64_t _sqrt(int64_t P);

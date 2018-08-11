@@ -1,5 +1,10 @@
 #include "fixedpoint.h"
 
+fixedPoint::fixedPoint(const double val)
+{
+    *this = val;
+}
+
 fixedPoint::fixedPoint(const fixedPoint *that)
 {
     this->val = that->val;
@@ -22,7 +27,7 @@ int64_t fixedPoint::round()
     return -((_fixedpoint_RND - this->val)>>_fixedpoint_PRECISION);
 }
 
-void fixedPoint::operator = (double val)
+void fixedPoint::operator = (const double val)
 {
     if( val>0 )
         this->val = val*_fixedpoint_MUL + 0.5;
@@ -30,7 +35,7 @@ void fixedPoint::operator = (double val)
         this->val = val*_fixedpoint_MUL - 0.5;
 }
 
-void fixedPoint::operator = (int64_t val)
+void fixedPoint::operator = (const int64_t val)
 {
     if( val > 0 )
         this->val = val<<_fixedpoint_PRECISION;
@@ -87,28 +92,28 @@ void fixedPoint::operator /= (const fixedPoint &that)
         this->val = -this->val;
 }
 
-fixedPoint fixedPoint::operator + (fixedPoint &that)
+fixedPoint fixedPoint::operator + (const fixedPoint &that)
 {
     fixedPoint  res(this);
     res += that;
     return res;
 }
 
-fixedPoint fixedPoint::operator - (fixedPoint &that)
+fixedPoint fixedPoint::operator - (const fixedPoint &that)
 {
     fixedPoint  res(this);
     res -= that;
     return res;
 }
 
-fixedPoint fixedPoint::operator * (fixedPoint &that)
+fixedPoint fixedPoint::operator * (const fixedPoint &that)
 {
     fixedPoint  res(this);
     res *= that;
     return res;
 }
 
-fixedPoint fixedPoint::operator / (fixedPoint &that)
+fixedPoint fixedPoint::operator / (const fixedPoint &that)
 {
     fixedPoint  res(this);
     res /= that;
