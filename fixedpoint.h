@@ -2,7 +2,6 @@
 #define FIXEDPOINT_H
 
 #include <stdint.h>
-#include <stdlib.h>
 
 /* 32 > _fixedpoint_PRECISION > 0.
  * A integer representing the number of bits after the point */
@@ -19,8 +18,6 @@ public:
     fixedPoint() {}
     fixedPoint(const double val);
     fixedPoint(const fixedPoint *that);
-
-    void    randon();
 
     double  toDouble();
     int64_t round();

@@ -10,13 +10,6 @@ fixedPoint::fixedPoint(const fixedPoint *that)
     this->val = that->val;
 }
 
-void fixedPoint::randon()
-{
-    this->val = rand()%_fixedpoint_MUL;
-    if( rand()%2 )
-        this->val = -this->val;
-}
-
 double fixedPoint::toDouble()
 {
     return (double) this->val/_fixedpoint_MUL;
@@ -121,18 +114,20 @@ fixedPoint fixedPoint::operator / (const fixedPoint &that)
 
 int64_t _sqrt(int64_t P)
 {
-    int64_t error;
-
     // Initial guess
-    int64_t p = P;
-    int64_t A = 1;
-    while( p )
+    uint8_t bmax = 64, bmen = 32, bmin = 0;
+    while( bmen>bmin )
     {
-        p >>= 2;
-        A <<= 1;
+        if( P>>bmen )
+            bmin = bmen;
+        else
+            bmax = bmen;
+        bmen = (bmax+bmin)>>1;
     }
+    int64_t A = 0x1<<(bmax>>1);
 
     // Newton-Raphson
+    int64_t error;
     while( 1 )
     {
         error = (P/A-A)/2;
