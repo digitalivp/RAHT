@@ -13,6 +13,8 @@ fixedPoint::fixedPoint(const fixedPoint *that)
 void fixedPoint::randon()
 {
     this->val = rand()%_fixedpoint_MUL;
+    if( rand()%2 )
+        this->val = -this->val;
 }
 
 double fixedPoint::toDouble()
@@ -57,39 +59,36 @@ void fixedPoint::operator *= (const fixedPoint &that)
 {
     this->val *= that.val;
 
-    if( this->val > 0 )
-    {
-        this->val += _fixedpoint_RND;
-        this->val >>= _fixedpoint_PRECISION;
-    }
+    if( this->val < 0 )
+        this->val = -( (_fixedpoint_RND - this->val) >> _fixedpoint_PRECISION );
     else
-    {
-        this->val = _fixedpoint_RND - this->val;
-        this->val >>= _fixedpoint_PRECISION;
-        this->val = -this->val;
-    }
+        this->val = +( (_fixedpoint_RND + this->val) >> _fixedpoint_PRECISION );
 }
 
 void fixedPoint::operator /= (const fixedPoint &that)
 {
-    uint8_t signflag = 0;
-
     if( this->val < 0 )
     {
-        this->val = -this->val;
-        signflag = 1;
+        if( that.val < 0 )
+            this->val = -(
+                    ((-that.val)>>1) +
+                    ((-this->val)<<_fixedpoint_PRECISION) )/that.val;
+        else
+            this->val = -(
+                    ((+that.val)>>1) +
+                    ((-this->val)<<_fixedpoint_PRECISION) )/that.val;
     }
-    this->val <<= _fixedpoint_PRECISION;
-
-    if( that.val < 0 )
-        this->val += (-that.val)>>1;
     else
-        this->val += that.val>>1;
-
-    this->val /= that.val;
-
-    if( signflag )
-        this->val = -this->val;
+    {
+        if( that.val<0 )
+            this->val = +(
+                    ((-that.val)>>1) +
+                    ((+this->val)<<_fixedpoint_PRECISION) )/that.val;
+        else
+            this->val = +(
+                    ((+that.val)>>1) +
+                    ((+this->val)<<_fixedpoint_PRECISION) )/that.val;
+    }
 }
 
 fixedPoint fixedPoint::operator + (const fixedPoint &that)

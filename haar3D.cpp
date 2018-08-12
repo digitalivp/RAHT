@@ -69,11 +69,9 @@ void transform(fixedPoint Qstep, uint64_t w0, uint64_t w1, fixedPoint *C0, fixed
     {
         *CT1 =  *C1;
         *CT1 -= *C0;
-
         *CT0 =  *CT1;
         *CT0 *= b;
         *CT0 += *C0;
-
         *CT1 /= Qstep;
 
         C0++;
@@ -92,13 +90,11 @@ void itransform(fixedPoint Qstep, uint64_t w0, uint64_t w1, fixedPoint *C0, fixe
     while( K-- )
     {
         *C0 =  *CT1;
-        *C0 *= b;
         *C0 *= Qstep;
+        *C1 =  *C0;
+        *C0 *= b;
         *C0 -= *CT0;
         C0->val = -C0->val;
-
-        *C1 =  *CT1;
-        *C1 *= Qstep;
         *C1 += *C0;
 
         C0++;

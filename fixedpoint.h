@@ -10,7 +10,6 @@
 
 #define _fixedpoint_MUL         (((int64_t) 0x1)<<_fixedpoint_PRECISION)
 #define _fixedpoint_RND         (((int64_t) 0x1)<<(_fixedpoint_PRECISION-1))
-#define _fixedpoint_MUL2        (((int64_t) 0x1)<<(_fixedpoint_PRECISION*2))
 
 class fixedPoint
 {
