@@ -125,7 +125,7 @@ void haar3D(double *inV, double *inC, size_t K, size_t N, size_t depth, double *
 	copyAsort(inV, inC, K, N, CT, w, val, TMP);
 	for(i=0; i<N; i++)
     {
-        pos[i] = i;
+        pos[i] = i*K;
 		for(size_t k=0; k<K; k++)
 			C[i*K+k] = CT[TMP[i]*K+k];
     }
@@ -150,7 +150,7 @@ void haar3D(double *inV, double *inC, size_t K, size_t N, size_t depth, double *
 				wT[N] = wT[M];
 
 				a = sqrt(wT[M]);
-                transform(sqrt(w[i])/a, sqrt(w[j])/a, C+pos[i]*K, C+pos[j]*K, CT+pos[i]*K, CT+pos[j]*K, K);
+                transform(sqrt(w[i])/a, sqrt(w[j])/a, C+pos[i], C+pos[j], CT+pos[i], CT+pos[j], K);
                 posT[M] = pos[i];
                 posT[N] = pos[j];
 
@@ -159,6 +159,7 @@ void haar3D(double *inV, double *inC, size_t K, size_t N, size_t depth, double *
 			else
 			{
 				wT[M] = w[i];
+                posT[M] = pos[i];
 				i += 1;
 			}
 			M++;
@@ -190,7 +191,6 @@ void haar3D(double *inV, double *inC, size_t K, size_t N, size_t depth, double *
 	free(val);
 	free(valT);
     free(pos);
-    pos = posT;
 
 	if( outW!=NULL )
 	{
@@ -198,7 +198,7 @@ void haar3D(double *inV, double *inC, size_t K, size_t N, size_t depth, double *
 		{
 			for(size_t k=0; k<K; k++)
 				outCT[i+k*NN] = C[i*K+k];
-            outW[pos[i]] = w[i];
+            outW[posT[i]] = w[i];
 		}
 	}
 	else
