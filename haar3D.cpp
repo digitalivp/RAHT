@@ -8,11 +8,10 @@ struct mem
 
 bool compari(const mem &A, const mem &B) {return A.val < B.val;}
 
-void copyAsort(double *VX, double *CX, size_t K, size_t N, double *C, uint64_t *W, uint64_t *val, uint64_t *ord)
+void copyAsort(double *VX, size_t N, uint64_t *W, uint64_t *val, uint64_t *ord)
 {
     mem			*MEM = (mem *) malloc( N*sizeof(mem) );
     double		*VY = VX+N, *VZ = VY+N;
-    //double		*CY = CX+N, *CZ = CY+N;
     uint64_t	vx, vy, vz;
 
     for(size_t i=0; i<N; i++)
@@ -45,12 +44,8 @@ void copyAsort(double *VX, double *CX, size_t K, size_t N, double *C, uint64_t *
                 ((0x100000 & vx)<<40) + ((0x100000 & vy)<<41) + ((0x100000 & vz)<<42);
         MEM[i].ord = i;
 
-        for(size_t k=0; k<K; k++)
-            *(C++) = CX[i+k*N];
-
         W[i] = 1;
     }
-    //
 
     std::sort(MEM, MEM+N, compari);
 
@@ -119,16 +114,14 @@ void haar3D(double *inV, double *inC, size_t K, size_t N, size_t depth, double *
     uint64_t	*pos  = (uint64_t  *) malloc( N*sizeof(uint64_t) );
     uint64_t	*posT = (uint64_t  *) malloc( N*sizeof(uint64_t) );
     uint64_t	*TMP  = (uint64_t  *) malloc( N*sizeof(uint64_t) );
-    double		*TPV  = (double    *) malloc( N*K*sizeof(double) );
 
-    copyAsort(inV, inC, K, N, TPV, w, val, TMP);
+    copyAsort(inV, N, w, val, TMP);
     for(i=0; i<N; i++)
     {
         pos[i] = i;
         for(size_t k=0; k<K; k++)
-            C[i*K+k] = TPV[TMP[i]*K+k];
+            C[i*K+k] = inC[TMP[i]+k*N];
     }
-    free(TPV);
     free(TMP);
 
     for(d=0; d<depth; d++)
@@ -219,6 +212,7 @@ void haar3D(double *inV, double *inC, size_t K, size_t N, size_t depth, double *
  */
 void inv_haar3D(double *inV, double *inCT, size_t K, size_t N, size_t depth, double *outC)
 {
+    /*
     size_t	NN=N;
     size_t	M=N, S, d, i, j;
     double	a;
@@ -238,7 +232,7 @@ void inv_haar3D(double *inV, double *inCT, size_t K, size_t N, size_t depth, dou
 
     uint64_t  *TMP;
 
-    copyAsort(inV, inCT, K, N, CT, w, val, ord);
+    copyAsort(inV, N, w, val, ord);
     for(i=0; i<N; i++)
         for(size_t k=0; k<K; k++)
             C[i*K+k] = CT[i*K+k];
@@ -349,4 +343,5 @@ void inv_haar3D(double *inV, double *inCT, size_t K, size_t N, size_t depth, dou
 
     free(C);
     free(ord);
+    */
 }
