@@ -212,7 +212,6 @@ void haar3D(double *inV, double *inC, size_t K, size_t N, size_t depth, double *
  */
 void inv_haar3D(double *inV, double *inCT, size_t K, size_t N, size_t depth, double *outC)
 {
-    /*
     size_t	NN=N;
     size_t	M=N, S, d, i, j;
     double	a;
@@ -224,6 +223,8 @@ void inv_haar3D(double *inV, double *inCT, size_t K, size_t N, size_t depth, dou
     uint64_t	*wT   = (uint64_t  *) malloc( N*sizeof(uint64_t) );
     uint64_t	*val  = (uint64_t  *) malloc( N*sizeof(uint64_t) );
     uint64_t	*valT = (uint64_t  *) malloc( N*sizeof(uint64_t) );
+    uint64_t	*pos  = (uint64_t  *) malloc( N*sizeof(uint64_t) );
+    uint64_t	*posT = (uint64_t  *) malloc( N*sizeof(uint64_t) );
     uint64_t	*ord  = (uint64_t  *) malloc( N*sizeof(uint64_t) );
 
     uint64_t	**VAL = (uint64_t **) malloc( depth*sizeof(uint64_t *) );
@@ -232,10 +233,10 @@ void inv_haar3D(double *inV, double *inCT, size_t K, size_t N, size_t depth, dou
 
     uint64_t  *TMP;
 
+    //copyAsort(inV, inCT, K, N, CT, w, val, ord);
     copyAsort(inV, N, w, val, ord);
     for(i=0; i<N; i++)
-        for(size_t k=0; k<K; k++)
-            C[i*K+k] = CT[i*K+k];
+        pos[i] = i;
 
     // Transformada direta (partes)
     // executa a mesma ordem de passos da transformada direta, apenas armazenando
@@ -250,35 +251,64 @@ void inv_haar3D(double *inV, double *inCT, size_t K, size_t N, size_t depth, dou
         iM[d] = M;
 
         i = 0;
-        S = M;
         M = 0;
+        S = N;
 
         while( i<S )
         {
-            valT[M] = val[i] >> 1;
             j = i+1;
+            valT[M] = val[i] >> 1;
 
             if( j<S && ((val[i]&0xFFFFFFFFFFFFFFFE)==(val[j]&0xFFFFFFFFFFFFFFFE)) )
             {
+                N--;
+
                 wT[M] = w[i]+w[j];
+                wT[N] = wT[M];
+                posT[M] = pos[i];
+                posT[N] = pos[j];
+
                 i += 2;
             }
             else
             {
                 wT[M] = w[i];
+                posT[M] = pos[i];
+
                 i += 1;
             }
             M++;
+        }
+        for(i=N; i<S; i++)
+        {
+            pos[i] = posT[i];
+            w[i] = wT[i];
         }
 
         TMP  = valT;
         valT = val;
         val  = TMP;
 
-        TMP = wT;
-        wT  = w;
-        w   = TMP;
+        TMP  = posT;
+        posT = pos;
+        pos  = TMP;
+
+        TMP  = wT;
+        wT   = w;
+        w    = TMP;
     }
+
+    // Reorder
+    for(i=0; i<NN; i++)
+    {
+        for(size_t k=0; k<K; k++)
+        {
+            CT[i*K+k] = inCT[pos[i]+k*NN];
+            C[i*K+k] = CT[i*K+k];
+        }
+    }
+    free(pos);
+    free(posT);
 
     // Transformada inversa
     while( d )
@@ -343,5 +373,4 @@ void inv_haar3D(double *inV, double *inCT, size_t K, size_t N, size_t depth, dou
 
     free(C);
     free(ord);
-    */
 }
