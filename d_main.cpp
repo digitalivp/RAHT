@@ -39,8 +39,8 @@ void mexFunction(int nlhs, mxArray *plhs[],
     }
     if( nrhs!=3 && nrhs!=5 )
         mexErrMsgTxt("Expected 3 or 5 inputs");
-    if( nlhs>2 )
-		mexErrMsgTxt("Expected 1 or 2 outputs");
+    if( nlhs>3 )
+        mexErrMsgTxt("Expected 1, 2 or 3 outputs");
     if( mxGetClassID(prhs[0])!=mxDOUBLE_CLASS ||
             mxGetClassID(prhs[1])!=mxDOUBLE_CLASS ||
             mxGetClassID(prhs[2])!=mxDOUBLE_CLASS )
@@ -60,7 +60,13 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
 	// Haar3d transform
 	plhs[0] = mxCreateDoubleMatrix(mxGetM(prhs[0]), mxGetN(prhs[1]), mxREAL);
-    if(nlhs==2)
+    if(nlhs==3)
+    {
+        plhs[1] = mxCreateDoubleMatrix(mxGetM(prhs[0]), 1, mxREAL);
+        plhs[2] = mxCreateNumericMatrix(mxGetM(prhs[0]), 1, mxUINT64_CLASS, mxREAL);
+        haar3D(mxGetPr(prhs[0]), mxGetPr(prhs[1]), mxGetN(prhs[1]), mxGetM(prhs[1]), *mxGetPr(prhs[2]), mxGetPr(plhs[0]), mxGetPr(plhs[1]), (uint64_t *) mxGetPr(plhs[2]));
+    }
+    else if(nlhs==2)
     {
         plhs[1] = mxCreateDoubleMatrix(mxGetM(prhs[0]), 1, mxREAL);
 		haar3D(mxGetPr(prhs[0]), mxGetPr(prhs[1]), mxGetN(prhs[1]), mxGetM(prhs[1]), *mxGetPr(prhs[2]), mxGetPr(plhs[0]), mxGetPr(plhs[1]));

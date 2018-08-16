@@ -8,10 +8,11 @@ struct mem
 
 bool compari(const mem &A, const mem &B) {return A.val < B.val;}
 
-void copyAsort(double *VX, size_t N, uint64_t *W, uint64_t *val, uint64_t *ord)
+void copyAsort(double *VX, double *CX, size_t K, size_t N, double *C, uint64_t *W, uint64_t *val, uint64_t *ord)
 {
     mem			*MEM = (mem *) malloc( N*sizeof(mem) );
     double		*VY = VX+N, *VZ = VY+N;
+    //double		*CY = CX+N, *CZ = CY+N;
     uint64_t	vx, vy, vz;
 
     for(size_t i=0; i<N; i++)
@@ -44,8 +45,12 @@ void copyAsort(double *VX, size_t N, uint64_t *W, uint64_t *val, uint64_t *ord)
                 ((0x100000 & vx)<<40) + ((0x100000 & vy)<<41) + ((0x100000 & vz)<<42);
         MEM[i].ord = i;
 
+        for(size_t k=0; k<K; k++)
+            *(C++) = CX[i+k*N];
+
         W[i] = 1;
     }
+    //
 
     std::sort(MEM, MEM+N, compari);
 
@@ -58,15 +63,15 @@ void copyAsort(double *VX, size_t N, uint64_t *W, uint64_t *val, uint64_t *ord)
     free(MEM);
 }
 
-void transform(double a0, double a1, double *C0, double *C1, size_t K)
+void transform(double a0, double a1, double *C0, double *C1, double *CT0, double *CT1, size_t K)
 {
     while( K-- )
     {
-        double v0 = a0*(*C0) + a1*(*C1);
-        double v1 = a0*(*C1) - a1*(*C0);
+        *(CT0++) = a0*(*C0) + a1*(*C1);
+        *(CT1++) = a0*(*C1) - a1*(*C0);
 
-        *(C0++) = v0;
-        *(C1++) = v1;
+        C0++;
+        C1++;
     }
 }
 
@@ -99,7 +104,7 @@ void copyFromMEM(uint64_t *IN_VAL, uint64_t *IN_W, uint64_t *OUT_VAL, uint64_t *
  * plhs[0] = mxCreateDoubleMatrix(NN, 3, mxREAL);
  * double	*outCT = mxGetPr(plhs[0])
  */
-void haar3D(double *inV, double *inC, size_t K, size_t N, size_t depth, double *outCT, double *outW)
+void haar3D(double *inV, double *inC, size_t K, size_t N, size_t depth, double *outCT, double *outW, uint64_t *outVAL)
 {
     size_t	NN=N;
     size_t	M=N, S, d, i, j;
@@ -107,6 +112,7 @@ void haar3D(double *inV, double *inC, size_t K, size_t N, size_t depth, double *
     depth *= 3;
 
     double		*C	  = (double    *) malloc( N*K*sizeof(double) );
+    double		*CT   = (double    *) malloc( N*K*sizeof(double) );
     uint64_t	*w	  = (uint64_t  *) malloc( N*sizeof(uint64_t) );
     uint64_t	*wT   = (uint64_t  *) malloc( N*sizeof(uint64_t) );
     uint64_t	*val  = (uint64_t  *) malloc( N*sizeof(uint64_t) );
@@ -114,13 +120,14 @@ void haar3D(double *inV, double *inC, size_t K, size_t N, size_t depth, double *
     uint64_t	*pos  = (uint64_t  *) malloc( N*sizeof(uint64_t) );
     uint64_t	*posT = (uint64_t  *) malloc( N*sizeof(uint64_t) );
     uint64_t	*TMP  = (uint64_t  *) malloc( N*sizeof(uint64_t) );
+    double		*TPV;
 
-    copyAsort(inV, N, w, val, TMP);
+    copyAsort(inV, inC, K, N, CT, w, val, TMP);
     for(i=0; i<N; i++)
     {
-        pos[i] = i;
+        pos[i] = val[i];
         for(size_t k=0; k<K; k++)
-            C[i*K+k] = inC[TMP[i]+k*N];
+            C[i*K+k] = CT[TMP[i]*K+k];
     }
     free(TMP);
 
@@ -143,7 +150,7 @@ void haar3D(double *inV, double *inC, size_t K, size_t N, size_t depth, double *
                 wT[N] = wT[M];
 
                 a = sqrt(wT[M]);
-                transform(sqrt(w[i])/a, sqrt(w[j])/a, C+pos[i]*K, C+pos[j]*K, K);
+                transform(sqrt(w[i])/a, sqrt(w[j])/a, C+i*K, C+j*K, CT+M*K, CT+N*K, K);
                 posT[M] = pos[i];
                 posT[N] = pos[j];
 
@@ -154,15 +161,24 @@ void haar3D(double *inV, double *inC, size_t K, size_t N, size_t depth, double *
                 wT[M] = w[i];
                 posT[M] = pos[i];
 
+                for(size_t k=0; k<K; k++)
+                    CT[M*K+k] = C[i*K+k];
+
                 i += 1;
             }
             M++;
         }
         for(i=N; i<S; i++)
         {
-            pos[i] = posT[i];
+            for(size_t k=0; k<K; k++)
+                C[i*K+k] = CT[i*K+k];
             w[i] = wT[i];
+            pos[i] = posT[i];
         }
+
+        TPV  = CT;
+        CT   = C;
+        C    = TPV;
 
         TMP  = valT;
         valT = val;
@@ -182,13 +198,23 @@ void haar3D(double *inV, double *inC, size_t K, size_t N, size_t depth, double *
     free(valT);
     free(posT);
 
-    if( outW!=NULL )
+    if( outVAL!=NULL )
     {
         for(i=0; i<NN; i++)
         {
             for(size_t k=0; k<K; k++)
                 outCT[i+k*NN] = C[i*K+k];
-            outW[pos[i]] = w[i];
+            outW[i] = w[i];
+            outVAL[i] = pos[i];
+        }
+    }
+    else if( outW!=NULL )
+    {
+        for(i=0; i<NN; i++)
+        {
+            for(size_t k=0; k<K; k++)
+                outCT[i+k*NN] = C[i*K+k];
+            outW[i] = w[i];
         }
     }
     else
@@ -200,6 +226,7 @@ void haar3D(double *inV, double *inC, size_t K, size_t N, size_t depth, double *
 
     free(w);
     free(C);
+    free(CT);
     free(pos);
 }
 
@@ -223,8 +250,6 @@ void inv_haar3D(double *inV, double *inCT, size_t K, size_t N, size_t depth, dou
     uint64_t	*wT   = (uint64_t  *) malloc( N*sizeof(uint64_t) );
     uint64_t	*val  = (uint64_t  *) malloc( N*sizeof(uint64_t) );
     uint64_t	*valT = (uint64_t  *) malloc( N*sizeof(uint64_t) );
-    uint64_t	*pos  = (uint64_t  *) malloc( N*sizeof(uint64_t) );
-    uint64_t	*posT = (uint64_t  *) malloc( N*sizeof(uint64_t) );
     uint64_t	*ord  = (uint64_t  *) malloc( N*sizeof(uint64_t) );
 
     uint64_t	**VAL = (uint64_t **) malloc( depth*sizeof(uint64_t *) );
@@ -233,10 +258,10 @@ void inv_haar3D(double *inV, double *inCT, size_t K, size_t N, size_t depth, dou
 
     uint64_t  *TMP;
 
-    //copyAsort(inV, inCT, K, N, CT, w, val, ord);
-    copyAsort(inV, N, w, val, ord);
+    copyAsort(inV, inCT, K, N, CT, w, val, ord);
     for(i=0; i<N; i++)
-        pos[i] = i;
+        for(size_t k=0; k<K; k++)
+            C[i*K+k] = CT[i*K+k];
 
     // Transformada direta (partes)
     // executa a mesma ordem de passos da transformada direta, apenas armazenando
@@ -251,64 +276,35 @@ void inv_haar3D(double *inV, double *inCT, size_t K, size_t N, size_t depth, dou
         iM[d] = M;
 
         i = 0;
+        S = M;
         M = 0;
-        S = N;
 
         while( i<S )
         {
-            j = i+1;
             valT[M] = val[i] >> 1;
+            j = i+1;
 
             if( j<S && ((val[i]&0xFFFFFFFFFFFFFFFE)==(val[j]&0xFFFFFFFFFFFFFFFE)) )
             {
-                N--;
-
                 wT[M] = w[i]+w[j];
-                wT[N] = wT[M];
-                posT[M] = pos[i];
-                posT[N] = pos[j];
-
                 i += 2;
             }
             else
             {
                 wT[M] = w[i];
-                posT[M] = pos[i];
-
                 i += 1;
             }
             M++;
-        }
-        for(i=N; i<S; i++)
-        {
-            pos[i] = posT[i];
-            w[i] = wT[i];
         }
 
         TMP  = valT;
         valT = val;
         val  = TMP;
 
-        TMP  = posT;
-        posT = pos;
-        pos  = TMP;
-
-        TMP  = wT;
-        wT   = w;
-        w    = TMP;
+        TMP = wT;
+        wT  = w;
+        w   = TMP;
     }
-
-    // Reorder
-    for(i=0; i<NN; i++)
-    {
-        for(size_t k=0; k<K; k++)
-        {
-            CT[i*K+k] = inCT[pos[i]+k*NN];
-            C[i*K+k] = CT[i*K+k];
-        }
-    }
-    free(pos);
-    free(posT);
 
     // Transformada inversa
     while( d )
