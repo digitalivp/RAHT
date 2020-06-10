@@ -64,8 +64,6 @@ void mexFunction(int nlhs, mxArray *plhs[],
     if( nrhs==6 ) {
         if( mxGetClassID(prhs[4])!=mxUINT8_CLASS && mxGetClassID(prhs[4])!=mxLOGICAL_CLASS )
             mexErrMsgTxt("fifth input should be UINT8");
-        if( mxGetClassID(prhs[5])!=mxDOUBLE_CLASS )
-            mexErrMsgTxt("Sixth input should be DOUBLE");
         if( N!=mxGetM(prhs[4]) )
             mexErrMsgTxt("First and fifth inputs should have the same number of lines");
         if( mxGetN(prhs[4])!=1 )
