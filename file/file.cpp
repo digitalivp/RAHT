@@ -28,6 +28,7 @@ int64_t _u2s(uint64_t val)
 file::file(char *filename, uint_least8_t flagWrite)
 {
     this->flagWrite = flagWrite;
+    this->filesize = 0;
 
     if( flagWrite )
         this->fid = fopen(filename, "wb");
@@ -44,6 +45,7 @@ file::~file()
 
     if( this->flagWrite )
     {
+        this->filesize += this->bits;
         uint_least8_t r = this->bits%LEAST8_BITS;
         if( r )
             this->write(0, LEAST8_BITS-r);
@@ -68,6 +70,7 @@ void file::flush()
     while( this->bits>=LEAST8_BITS )
     {
         this->bits -= LEAST8_BITS;
+        this->filesize += LEAST8_BITS;
         data = ((this->data)>>(this->bits)) & UINT_LEAST8_MAX;
         fwrite(&data, sizeof(uint_least8_t), 1, this->fid);
     }

@@ -28,15 +28,21 @@ private:
     uint_least8_t   bits;
     uint_least8_t   flagWrite;
     FILE            *fid;
-
+    uint64_t        filesize;
     void            flush();
     void            fill();
 
 public:
+
     file(char *filename, uint_least8_t flagWrite);
     ~file();
 
-    uint_least8_t   openError() { return this->fid==NULL; }
+    uint64_t file_size() {return this->filesize;}
+
+    uint_least8_t   openError()
+    {
+        return this->fid==NULL;
+    }
 
     /* Checks whether the end-of-File has been reached.
      *
